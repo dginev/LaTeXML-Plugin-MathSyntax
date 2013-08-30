@@ -21,11 +21,6 @@ use warnings;
 use version 0.2;
 our $VERSION = qv("v0.2"); # shorthand
 
-# Startup actions: import the constructors
-{ BEGIN{ use LaTeXML::MathParser qw(:constructors); 
-#### $::RD_TRACE=1;
-}}
-
 use Data::Dumper;
 use Marpa::R2;
 use LaTeXML::MathAST;
@@ -347,15 +342,3 @@ sub parse {
 }
 
 1;
-
-# DLMF:
-# (-)^n for (-1)^n
-# f^n (x) = [ f (x) ] ^ n usually
-# also f ( f ( ... f x ) ) 
-# f^-1 (x) = [inv(f)] (x)
-# (d/dx) ^ n, (-)^n is compositional
-# (z \frac{d}{dx})^n  and also (\frac{d}{dz} z)^n
-
-# Grobner bases (lookup!)
-# a := ( 3 > 1)
-# a \neq 2 > 1
