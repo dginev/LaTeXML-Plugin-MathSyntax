@@ -29,7 +29,8 @@ sub first_arg_role {
   my $xml = Lookup($id);
   if (!$xml) {
     $xml = XML::LibXML::Element->new('XMTok');
-    $xml->setAttribute('xml:id',$id); }
+    $xml->setAttribute('xml:id',$id); 
+    $xml->appendText($lex); }
   else { 
     $xml = $xml->cloneNode(1); }
   $xml->setAttribute('role',$role) if $xml;
@@ -173,8 +174,9 @@ sub MaybeLookup {
   my ($lex,$id) = split(/:/,$arg);
   my $xml = Lookup($id);
   if (!$xml) {
-    $xml = XML::LibXML::Element->new('XMTok');
-    $xml->setAttribute('xml:id',$id); }
+    $xml = XML::LibXML::Element->new('ltx:XMTok');
+    $xml->setAttribute('xml:id',$id);
+    $xml->appendText($lex); }
   else {
     $xml = $xml->cloneNode(1); }
   return $xml;
@@ -193,6 +195,12 @@ sub mark_use {
     }
   }
   1;
+}
+
+{
+  no warnings 'redefine';
+  sub LaTeXML::MathParser::getQName {
+    'ltx:'.$_[0]->localname; }
 }
 
 1;
