@@ -181,7 +181,7 @@ sub MaybeLookup {
   my ($lex,$id) = split(/:/,$arg);
   my $xml = Lookup($id);
   if (!$xml) {
-    $xml = XML::LibXML::Element->new('ltx:XMTok');
+    $xml = XML::LibXML::Element->new('XMTok');
     $xml->setAttribute('xml:id',$id);
     $xml->appendText($lex); }
   else {

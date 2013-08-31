@@ -18,6 +18,7 @@ package LaTeXML::MathSyntax;
 use strict;
 use warnings;
 use Data::Dumper;
+use Scalar::Util qw/blessed/;
 
 use version 0.2;
 our $VERSION = qv("v0.2"); # shorthand
@@ -480,7 +481,23 @@ sub parse {
     # Can't recognize it...print out the issue:
     $$lexref = join(' ',grep($_ ne '_::', @unparsed));
   }
-  (@values>1) ? (['ltx:XMApp',{meaning=>"cdlf-set"},New('cdlf-set',undef,omcd=>"cdlf"),@values]) : (shift @values);
+  my $result = (@values>1) ? (['ltx:XMApp',{meaning=>"cdlf-set"},New('cdlf-set',undef,omcd=>"cdlf"),@values]) : (shift @values);
+  if ($self->{output} eq 'array') {
+    return convert_to_array($result); }
+  else {
+    return $result; }
 }
+
+sub convert_to_array {
+  my ($tree) = @_;
+  if (blessed($tree)) {
+    # XML leaf, turn to array:
+    my @attributelist = $tree->attributes();
+    my $attributes = {map {$_->localname() => $_->value()} @attributelist};
+    ['ltx:'.$tree->localname,$attributes,$tree->textContent]; }
+  elsif (ref $tree eq 'ARRAY') {
+    return [map {convert_to_array($_)} @$tree]; }
+  else {
+    return $tree; }}
 
 1;
