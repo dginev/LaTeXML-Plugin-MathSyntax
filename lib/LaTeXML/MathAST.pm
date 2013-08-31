@@ -1,4 +1,6 @@
-package LaTeXML::MathSemantics;
+package LaTeXML::MathAST;
+use strict;
+use warnings;
 use Scalar::Util qw(blessed);
 use Data::Dumper;
 # Startup actions: import the constructors
@@ -13,8 +15,7 @@ sub finalize {
   #print STDERR "\nPruning: " if (exists $_[0]->{__PRUNE});
   #print STDERR "\nFinal state:\n",Dumper($_[0]->{atoms}),"\n\n";
   #Marpa::R2::Context::bail('PRUNE') if (exists $_[0]->{__PRUNE});
-  $_[1];
-}
+  $_[1]; }
 sub first_arg {
   my ($state,$arg) = @_;
   MaybeLookup($arg); }
@@ -26,9 +27,13 @@ sub first_arg_role {
   return $parse if ref $parse;
   my ($lex,$id) = split(/:/,$_[1]);
   my $xml = Lookup($id);
-  $xml = $xml ? ($xml->cloneNode(1)) : undef;
+  if (!$xml) {
+    $xml = XML::LibXML::Element->new('XMTok');
+    $xml->setAttribute('xml:id',$id); }
+  else { 
+    $xml = $xml->cloneNode(1); }
   $xml->setAttribute('role',$role) if $xml;
-  $xml; }
+  return $xml; }
 sub first_arg_number {
   my ($state,$parse) = @_;
   first_arg_role('NUMBER',$parse); }
@@ -47,12 +52,14 @@ sub concat_apply {
  $app->[1]->{'cat'}=$type;
  $app; }
 ## 2. Intermediate layer, records categories on resulting XML:
+ # Semantics: FA always scalar
 sub concat_apply_factor {
   my ( $state, $t1, $c, $t2) = @_;
   # Only for NON-atomic structures!
   #Marpa::R2::Context::bail('PRUNE') unless (((ref $t1) eq 'ARRAY') && ((ref $t2) eq 'ARRAY'));
   concat_apply($state, $t1, $c, $t2,'factor');
 }
+# Semantics: FA always scalar
 sub concat_apply_left {
   my ( $state, $t1, $c, $t2) = @_;
   # if t2 is an atom - mark as scalar or fail if inconsistent
@@ -60,6 +67,7 @@ sub concat_apply_left {
   $state->mark_use($t2,'scalar');
   concat_apply($state, $t1, $c, $t2,'factor');
 }
+# Semantics: FA always function
 sub concat_apply_right {
   my ( $state, $t1, $c, $t2) = @_;  
   # if t1 is an atom - mark as function or fail if inconsistent
@@ -76,7 +84,7 @@ sub infix_apply {
   my $app = ApplyNary(MaybeLookup($op),$t1,$t2); 
   $app->[1]->{'cat'}=$type;
   $app;}
-sub infix_apply_factor { $app = infix_apply(@_,'factor'); }
+sub infix_apply_factor { infix_apply(@_,'factor'); }
 sub infix_apply_term { infix_apply(@_,'term'); }
 sub infix_apply_type {  infix_apply(@_,'type'); }
 # TODO: Should we do something smarter for chains?
@@ -164,7 +172,11 @@ sub MaybeLookup {
   return $arg if ref $arg;
   my ($lex,$id) = split(/:/,$arg);
   my $xml = Lookup($id);
-  $xml = $xml ? ($xml->cloneNode(1)) : undef;
+  if (!$xml) {
+    $xml = XML::LibXML::Element->new('XMTok');
+    $xml->setAttribute('xml:id',$id); }
+  else {
+    $xml = $xml->cloneNode(1); }
   return $xml;
 }
 
@@ -184,3 +196,8 @@ sub mark_use {
 }
 
 1;
+
+# TODO: Prefix operators need more thinking...
+#   ... quite confusing interplay, think of -sin x and sin x/y
+#   or tg n!
+# TODO: Maybe add BigTerm as possible argument?
