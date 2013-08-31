@@ -8,6 +8,13 @@ use Data::Dumper;
 
 sub new {
   my ($class,@args) = @_;
+  if (! defined $LaTeXML::MathParser::DOCUMENT) {
+  {
+    # We need to redefine whenever we're not testing from within MathParser
+    no warnings 'redefine';
+    sub LaTeXML::MathParser::getQName {
+      'ltx:'.$_[0]->localname; }
+  }}
   bless {steps=>[]}, $class; }
 
 # I. Basic
@@ -195,12 +202,6 @@ sub mark_use {
     }
   }
   1;
-}
-
-{
-  no warnings 'redefine';
-  sub LaTeXML::MathParser::getQName {
-    'ltx:'.$_[0]->localname; }
 }
 
 1;
