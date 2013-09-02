@@ -2,7 +2,7 @@
 # | LaTeXML::MathSyntax                                                 | #
 # | A Marpa::R2 grammar for mathematical expressions                    | #
 # |=====================================================================| #
-# | NOT Part of LaTeXML:                                                    | #
+# | NOT Part of LaTeXML:                                                | #
 # |  Public domain software, produced as part of work done by the       | #
 # |  United States Government & not subject to copyright in the US.     | #
 # |---------------------------------------------------------------------| #
