@@ -43,17 +43,24 @@ sub math_tests {
     # Unwrap the leading math/xmath if present
     while ($array_parse->[0] =~ /^ltx:X?Math$/) {
       $array_parse = $array_parse->[2]; }
-    is_semantically($array_parse, $array_expected, "Formula: $input");
+    # TODO: Figure out how to neatly test both syntax and semantics
+    is_syntax($array_parse, $array_expected, "Formula: $input");
   }
   done_testing();
 }
 
-sub is_semantically {
-  my ($tree1, $tree2) = @_;
+sub is_semantics {
+  my ($tree1, $tree2,$source) = @_;
   is_deeply(
     semantic_skeleton($tree1),
-    semantic_skeleton($tree2)); }
-
+    semantic_skeleton($tree2),
+    $source); }
+sub is_syntax {
+  my ($tree1, $tree2,$source) = @_;
+  is_deeply(
+    syntactic_skeleton($tree1),
+    syntactic_skeleton($tree2),
+    $source); }
 ### Output/annotation manipulation
 # Marpa::R2 grammar converting an annotation string into a Perl array
 use Marpa::R2;
@@ -80,8 +87,7 @@ Term ::=
   || Word ':' Word action => basic_symbol
   # Special case where the lexeme is a special char :()
   || ':' ':' Word ':' Word action => csymbol
-  | '(' ':' Word ':' Word action => csymbol
-  | ')' ':' Word ':' Word action => csymbol
+  || ':' Word ':' Word action => nolex_csymbol
 
 Word ~ [^\s\:\(\)]+
 :discard ~ whitespace
@@ -104,12 +110,12 @@ sub weaken_cmml {
   my ($cmml_array,$type) = @_;
   return $cmml_array if (!$type || ($type eq 'semantic'));
   # For now just downgrade to XMath immediately
-  return weaken_cmml_to_xmath($cmml_array); }
+  return weaken_cmml_to_xmath($cmml_array,$type); }
 
 our $xmath_name = {'apply'=>'ltx:XMApp','cn'=>'ltx:XMTok','ci'=>'ltx:XMTok','csymbol'=>'ltx:XMTok'};
 our $xmath_meaning = {'eq'=>'equals'};
 sub weaken_cmml_to_xmath {
-  my ($array) = @_;
+  my ($array,$type) = @_;
   # For now, simple renaming would do:
   return $array unless ref $array;
   my @copy = @$array;
@@ -119,13 +125,14 @@ sub weaken_cmml_to_xmath {
   $attributes->{omdcd} = delete $attributes->{cd} if exists $attributes->{cd};
   my @body;
   if ($content_head eq 'csymbol') {
-    @body = (delete $attributes->{lexeme});
+    my $lexeme = delete $attributes->{lexeme};
+    @body = $lexeme ? ($lexeme) : ();
     $attributes->{meaning} = shift @copy; }
   elsif ($content_head eq 'cn') {
     $attributes->{meaning} = shift @copy;
     @body = $attributes->{meaning}; }
   else {
-    @body = map {weaken_cmml_to_xmath($_)} @copy; }
+    @body = map {weaken_cmml_to_xmath($_,$type)} @copy; }
   
   my $meaning = $attributes->{meaning};
   if ($meaning && (exists $xmath_meaning->{$meaning})) {
@@ -153,6 +160,15 @@ sub semantic_skeleton {
   $attr = {omcd=>$attr->{omcd},meaning=>$attr->{meaning}};
   my @body = map {semantic_skeleton($_)} @copy;
   [$head,$attr,@body]; }
+sub syntactic_skeleton {
+  my ($array_ref) = @_;
+  return $array_ref unless (ref $array_ref eq 'ARRAY');
+  my @copy = @$array_ref;
+  my $head = shift @copy;
+  my $attr = shift @copy;
+  # OMCD and Meaning need to match up _ONLY_
+  my @body = map {syntactic_skeleton($_)} @copy;
+  [$head,{},@body]; }
 
 
 
@@ -172,6 +188,10 @@ sub CMML_Semantics::merge {
 sub CMML_Semantics::csymbol {
   my (undef, $lexeme, $colon1, $cd, $colon2, $meaning) = @_;
   ['csymbol',{cd=>$cd,lexeme=>$lexeme},$meaning]; }
+
+sub CMML_Semantics::nolex_csymbol {
+  my (undef, $colon1, $cd, $colon2, $meaning) = @_;
+  ['csymbol',{cd=>$cd},$meaning]; }
 
 sub CMML_Semantics::basic_symbol {
   my (undef, $lexeme, $colon, $meaning) = @_;
