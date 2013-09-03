@@ -14,13 +14,14 @@ package LaTeXML::Util::TestMath;
 use strict;
 use warnings;
 use Data::Dumper;
-use Scalar::Util qw/blessed/;
 use List::MoreUtils qw/natatime/;
+use Scalar::Util qw/blessed/;
 
 use LaTeXML::Converter;
 use LaTeXML::Util::Config;
 
 use Test::More;
+use Test::Deep qw/cmp_deeply supersetof/;
 use LaTeXML::Util::Test;
 our @ISA = qw(Exporter);
 our @EXPORT = (qw(math_tests anno_string_to_array weaken_cmml parse_TeX),
@@ -43,24 +44,33 @@ sub math_tests {
     # Unwrap the leading math/xmath if present
     while ($array_parse->[0] =~ /^ltx:X?Math$/) {
       $array_parse = $array_parse->[2]; }
+    my @parse_forest = ();
+    # If we're given a parse forest, deal with it appropriately
+    if (($array_parse->[0] eq 'ltx:XMApp') && 
+      (defined $array_parse->[1]->{meaning}) &&
+      ($array_parse->[1]->{meaning} eq 'cdlf-set')) {
+      @parse_forest = @$array_parse[2..scalar(@$array_parse)-1];
+    } else {
+      @parse_forest = ($array_parse); }
     # TODO: Figure out how to neatly test both syntax and semantics
-    is_syntax($array_parse, $array_expected, "Formula: $input");
+    is_syntax(\@parse_forest, $array_expected, "\nFormula: $input\nFound Parses: ".scalar(@parse_forest));
   }
   done_testing();
 }
 
 sub is_semantics {
-  my ($tree1, $tree2,$source) = @_;
-  is_deeply(
-    semantic_skeleton($tree1),
-    semantic_skeleton($tree2),
+  my ($parse_forest, $expected, $source) = @_;
+  cmp_deeply(
+    [map {semantic_skeleton($_)} @$parse_forest],
+    supersetof(semantic_skeleton($expected)),
     $source); }
 sub is_syntax {
-  my ($tree1, $tree2,$source) = @_;
-  is_deeply(
-    syntactic_skeleton($tree1),
-    syntactic_skeleton($tree2),
+  my ($parse_forest, $expected, $source) = @_;
+  cmp_deeply(
+    [map {syntactic_skeleton($_)} @$parse_forest],
+    supersetof(syntactic_skeleton($expected)),
     $source); }
+
 ### Output/annotation manipulation
 # Marpa::R2 grammar converting an annotation string into a Perl array
 use Marpa::R2;

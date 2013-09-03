@@ -69,7 +69,7 @@ sub first_arg_formula {
 sub concat_apply {
  my ( $state, $t1, $c, $t2, $type) = @_;
  #print STDERR "ConcApply: ",Dumper($lhs)," <--- ",Dumper($rhs),"\n\n";
- my $app = Apply(New('concatenation',undef,role=>"MULOP",omcd=>"underspecified"),$t1,$t2); 
+ my $app = ApplyNary(New('concatenation',undef,role=>"MULOP",omcd=>"underspecified"),$t1,$t2); 
  $app->[1]->{'cat'}=$type;
  $app; }
 ## 2. Intermediate layer, records categories on resulting XML:
