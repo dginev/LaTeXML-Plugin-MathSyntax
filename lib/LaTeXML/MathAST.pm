@@ -27,6 +27,11 @@ sub new {
 bless {steps=>[]}, $class; }
 
 # I. Basic
+sub final_AST {
+  my ($values) = @_;
+  (@$values>1) ? 
+    ['ltx:XMApp',{meaning=>"cdlf-set"},New('cdlf-set',undef,omcd=>"cdlf"),@$values] :
+    $values->[0]; }
 sub finalize { 
   #print STDERR "\nPruning: " if (exists $_[0]->{__PRUNE});
   #print STDERR "\nFinal state:\n",Dumper($_[0]->{atoms}),"\n\n";

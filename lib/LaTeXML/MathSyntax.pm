@@ -481,7 +481,7 @@ sub parse {
     # Can't recognize it...print out the issue:
     $$lexref = join(' ',grep($_ ne '_::', @unparsed));
   }
-  my $result = (@values>1) ? (['ltx:XMApp',{meaning=>"cdlf-set"},New('cdlf-set',undef,omcd=>"cdlf"),@values]) : (shift @values);
+  my $result = LaTeXML::MathAST::final_AST(\@values);
   if ($self->{output} eq 'array') {
     return convert_to_array($result); }
   else {

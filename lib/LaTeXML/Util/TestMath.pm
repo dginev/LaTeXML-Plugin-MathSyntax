@@ -15,13 +15,18 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use LaTeXML::Converter;
+use LaTeXML::Util::Config;
+
 use Test::More;
 use LaTeXML::Util::Test;
 our @ISA = qw(Exporter);
 our @EXPORT = (qw(anno_string_to_array
-  weaken_cmml_array cmml_to_xmath_array),
+  weaken_cmml_array cmml_to_xmath_array
+  parse_TeX),
   @Test::More::EXPORT);
 
+### Output/annotation manipulation
 # Marpa::R2 grammar converting an annotation string into a Perl array
 use Marpa::R2;
 my $string_to_array_grammar =
@@ -67,6 +72,10 @@ sub anno_string_to_array {
   # print STDERR Dumper($value);
   return $value; }
 
+sub weaken_cmml_array {
+  #TODO
+}
+
 ### Semantics
 sub CMML_Semantics::new {return {}; }
 
@@ -87,5 +96,36 @@ sub CMML_Semantics::csymbol {
 sub CMML_Semantics::basic_symbol {
   my (undef, $lexeme, $colon, $meaning) = @_;
   [$meaning,{},$lexeme]; }
+
+
+### Input manipulation
+
+sub parse_TeX {
+  my ($tex_math,$parser) = @_;
+  $parser //= 'LaTeXML::MathSyntax';
+  my $opts = LaTeXML::Util::Config->new(
+    input_limit=>100,
+    whatsin=>'math',
+    whatsout=>'math',
+    post=>0,
+    verbosity=>2,
+    mathparse=>$parser,
+    defaultresources => 0,
+    format=>'dom',
+    preload=>[
+      'LaTeX.pool','amsmath.sty',
+      'amsthm.sty',
+      'amstext.sty',
+      'amssymb.sty',
+      'eucal.sty',
+      '[dvipsnames]xcolor.sty',]);
+  my $latexml = LaTeXML::Converter->get_converter($opts);
+  $latexml->prepare_session($opts);
+  # Digest and convert to LaTeXML's XML
+  my $response = $latexml->convert($tex_math);
+  my $xmath = $response->{result};
+  print $xmath->toString(1);
+  return $xmath;
+}
 
 1;
