@@ -43,10 +43,16 @@ sub math_tests {
     # Unwrap the leading math/xmath if present
     while ($array_parse->[0] =~ /^ltx:X?Math$/) {
       $array_parse = $array_parse->[2]; }
-    is_deeply($array_parse, $array_expected, "Formula: $input");
+    is_semantically($array_parse, $array_expected, "Formula: $input");
   }
   done_testing();
 }
+
+sub is_semantically {
+  my ($tree1, $tree2) = @_;
+  is_deeply(
+    semantic_skeleton($tree1),
+    semantic_skeleton($tree2)); }
 
 ### Output/annotation manipulation
 # Marpa::R2 grammar converting an annotation string into a Perl array
@@ -101,6 +107,7 @@ sub weaken_cmml {
   return weaken_cmml_to_xmath($cmml_array); }
 
 our $xmath_name = {'apply'=>'ltx:XMApp','cn'=>'ltx:XMTok','ci'=>'ltx:XMTok','csymbol'=>'ltx:XMTok'};
+our $xmath_meaning = {'eq'=>'equals'};
 sub weaken_cmml_to_xmath {
   my ($array) = @_;
   # For now, simple renaming would do:
@@ -114,9 +121,15 @@ sub weaken_cmml_to_xmath {
   if ($content_head eq 'csymbol') {
     @body = (delete $attributes->{lexeme});
     $attributes->{meaning} = shift @copy; }
+  elsif ($content_head eq 'cn') {
+    $attributes->{meaning} = shift @copy;
+    @body = $attributes->{meaning}; }
   else {
     @body = map {weaken_cmml_to_xmath($_)} @copy; }
   
+  my $meaning = $attributes->{meaning};
+  if ($meaning && (exists $xmath_meaning->{$meaning})) {
+    $attributes->{meaning} = $xmath_meaning->{$meaning}; }
   return [$head, $attributes, @body]; }
 
 sub xmldom_to_array {
@@ -129,6 +142,19 @@ sub xmldom_to_array {
     ['ltx:'.$tree->localname,$attributes,(grep {defined} map{xmldom_to_array($_)} $tree->childNodes)]; }
   else {
     (ref $tree) ? $tree->toString : $tree; }}
+
+sub semantic_skeleton {
+  my ($array_ref) = @_;
+  return $array_ref unless (ref $array_ref eq 'ARRAY');
+  my @copy = @$array_ref;
+  my $head = shift @copy;
+  my $attr = shift @copy;
+  # OMCD and Meaning need to match up _ONLY_
+  $attr = {omcd=>$attr->{omcd},meaning=>$attr->{meaning}};
+  my @body = map {semantic_skeleton($_)} @copy;
+  [$head,$attr,@body]; }
+
+
 
 ### Semantics
 sub CMML_Semantics::new {return {}; }
@@ -162,7 +188,7 @@ sub parse_TeX {
     whatsin=>'math',
     whatsout=>'math',
     post=>0,
-    verbosity=>2,
+    verbosity=>-2,
     mathparse=>$options{parser},
     defaultresources => 0,
     format=>'dom',
@@ -178,7 +204,6 @@ sub parse_TeX {
   # Digest and convert to LaTeXML's XML
   my $response = $latexml->convert($tex_math);
   my $xmath = $response->{result};
-  print $xmath->toString(1);
   return $xmath;
 }
 

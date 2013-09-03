@@ -21,7 +21,6 @@ sub new {
       my $t;
       my $app = Apply(New(undef,undef, role=>$y.'SCRIPTOP'),
           $base,Arg($script,0));
-      print STDERR Dumper($app);
       $app; }
   }}
 bless {steps=>[]}, $class; }
