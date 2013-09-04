@@ -13,6 +13,7 @@
 package LaTeXML::Util::TestMath;
 use strict;
 use warnings;
+
 use Data::Dumper;
 use List::MoreUtils qw/natatime/;
 use Scalar::Util qw/blessed/;
@@ -22,6 +23,14 @@ use LaTeXML::Util::Config;
 
 use Test::More;
 use Test::Deep qw/cmp_deeply supersetof/;
+use Test::Deep::Set;
+# Ugh, Test::Deep has really horrible diagnostics for sets...
+{ no warnings 'redefine';
+  sub Test::Deep::Set::diagnostics {'';}
+  sub Test::Deep::supersetof {
+    return Test::Deep::Set->new(1, "sup", @_);
+  }}
+  
 use LaTeXML::Util::Test;
 our @ISA = qw(Exporter);
 our @EXPORT = (qw(math_tests anno_string_to_array weaken_cmml parse_TeX),
@@ -35,16 +44,19 @@ sub math_tests {
   my $iterator = natatime 2, @{$options{tests}};
 
   while (my ($input,$output) = $iterator->()) {
-    SKIP: {
     my $copy = $input;
     my $array_expected = anno_string_to_array($output);
-    ok($array_expected,"Parse to CMML: $output") or next;
+    unless ($array_expected) {
+      fail("Parse to CMML: $output"); next; }
     $array_expected = weaken_cmml($array_expected,$options{type});
-    ok($array_expected,"Weaken: $output") or next;
+    unless ($array_expected) {
+      fail("Weaken: $output"); next; }
     my $xml_parse = parse_TeX($input,parser=>'LaTeXML::MathSyntax');
-    ok($xml_parse,"Parse TeX: $input") or next;
+    unless ($xml_parse) {
+      fail("Parse TeX: $input"); next; }
     my $array_parse = xmldom_to_array($xml_parse);
-    ok($xml_parse,"Convert to array: $input") or next;
+    unless ($xml_parse) {
+      fail("Convert to array: $input"); next; }
     # Unwrap the leading math/xmath if present
     while ($array_parse && ($array_parse->[0] =~ /^ltx:X?Math$/)) {
       $array_parse = $array_parse->[2]; }
@@ -58,24 +70,42 @@ sub math_tests {
       @parse_forest = ($array_parse); }
     # TODO: Figure out how to neatly test both syntax and semantics
     my $s = (@parse_forest > 1) ? 's' : '';
-    is_syntax(\@parse_forest, $array_expected, "Syntax tree match (".scalar(@parse_forest)." parse$s): $input");
-  }}
+    is_syntax(\@parse_forest, $array_expected, "Syntax tree match (".scalar(@parse_forest)." parse$s):\n $input\n");
+  }
   done_testing();
 }
 
 sub is_semantics {
-  my ($parse_forest, $expected, $source) = @_;
+  my ($parse_forest, $expected, $message) = @_;
+  my $expected_skeleton = semantic_skeleton($expected);
+  if (! $expected_skeleton) {
+    fail ("Semantic skeleton for expected.\n$message");
+    return; }
+  my $candidate_skeletons = [map {semantic_skeleton($_)} @$parse_forest];
+  if (grep {! defined} @$candidate_skeletons) {
+    fail ("Semantic skeleton for input candidate.\n$message");
+    return; }
   cmp_deeply(
-    [map {semantic_skeleton($_)} @$parse_forest],
-    supersetof(semantic_skeleton($expected)),
-    $source); }
+    $candidate_skeletons,
+    supersetof($expected_skeleton),
+    $message); }
+
 sub is_syntax {
-  my ($parse_forest, $expected, $source) = @_;
+  my ($parse_forest, $expected, $message) = @_;
+  my $expected_skeleton = syntactic_skeleton($expected);
+  if (! $expected_skeleton) {
+    fail ("Syntactic skeleton for expected.\n$message");
+    return; }
+  my $candidate_skeletons = [map {syntactic_skeleton($_)} @$parse_forest];
+  if (grep {! defined} @$candidate_skeletons) {
+    fail ("Syntactic skeleton for input candidate.\n$message");
+    return; }
+  no warnings 'redefine';
   cmp_deeply(
-    [map {syntactic_skeleton($_)} @$parse_forest],
-    supersetof(syntactic_skeleton($expected)),
-    #$source."\n".Dumper($expected)); }
-    $source); }
+    $candidate_skeletons,
+    supersetof($expected_skeleton),
+    #$message."\n".Dumper($expected)); }
+    $message); }
 
 ### Output/annotation manipulation
 # Marpa::R2 grammar converting an annotation string into a Perl array
