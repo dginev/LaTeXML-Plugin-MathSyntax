@@ -83,7 +83,7 @@ my $string_to_array_grammar =
 
 Expression ::=
   Application
-  | Term
+  | QualifiedTerm
 
 Application ::=
   '(' Expression Arguments ')' action => apply assoc => group
@@ -91,7 +91,21 @@ Application ::=
 Arguments ::= 
   Expression action => merge
   | Expression Arguments action => merge
-  
+
+QualifiedTerm ::=
+  Term
+  | Term KeyValList action => attach_keyval
+
+KeyValList ::=
+ '[' KeyVals ']' action => keyvals assoc => group
+
+KeyVals ::= 
+  KeyVal action => merge
+  | KeyVal KeyVals action => merge
+
+KeyVal ::=
+  Word ':' Word action => keyval
+
 Term ::= 
   Word ':' Word ':' Word action => csymbol
   || Word ':' Word action => basic_symbol
@@ -99,7 +113,7 @@ Term ::=
   || ':' ':' Word ':' Word action => csymbol
   || ':' Word ':' Word action => nolex_csymbol
 
-Word ~ [^\s\:\(\)]+
+Word ~ [^\s\:\(\)\[\]]+
 :discard ~ whitespace
 whitespace ~ [\s]+
 
@@ -207,6 +221,21 @@ sub CMML_Semantics::basic_symbol {
   my (undef, $lexeme, $colon, $meaning) = @_;
   [$meaning,{},$lexeme]; }
 
+sub CMML_Semantics::keyval {
+  my (undef,$key,$value)=@_;
+  [$key,$value]; }
+
+sub CMML_Semantics::keyvals {
+  my (undef,$open,$keyvals,$close)=@_;
+  $keyvals; }
+
+sub CMML_Semantics::attach_keyval {
+  my (undef,$term,$keyvals) = @_;
+  my $attr = $term->[1];
+  foreach my $keyval(@$keyvals) {
+    $attr->{$keyval->[1]} = $keyval->[2];
+  }
+  $term; }
 
 ### Input manipulation
 
