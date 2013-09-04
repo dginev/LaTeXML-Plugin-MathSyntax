@@ -69,6 +69,7 @@ sub is_syntax {
   cmp_deeply(
     [map {syntactic_skeleton($_)} @$parse_forest],
     supersetof(syntactic_skeleton($expected)),
+    #$source."\n".Dumper($expected)); }
     $source); }
 
 ### Output/annotation manipulation
@@ -83,37 +84,52 @@ my $string_to_array_grammar =
 
 Expression ::=
   Application
-  | QualifiedTerm
+  | Term
 
 Application ::=
   '(' Expression Arguments ')' action => apply assoc => group
 
 Arguments ::= 
-  Expression action => merge
-  | Expression Arguments action => merge
+  Expression action => wrap
+  | BVar Expression action => wrap
+  | Expression Arguments action => merge_right
 
-QualifiedTerm ::=
-  Term
-  | Term KeyValList action => attach_keyval
+BVar ::=
+ '{' Term '}' action => bvar assoc => group
+ | '{' Term Degree '}' action => bvar_degree assoc => group
+
+Degree ::=
+  '^' Expression action => degree
+
+Term ::=
+  RawTerm
+  | RawTerm KeyValList action => attach_keyval
 
 KeyValList ::=
- '[' KeyVals ']' action => keyvals assoc => group
+ '[' KeyVals ']' action => unwrap assoc => group
 
 KeyVals ::= 
-  KeyVal action => merge
-  | KeyVal KeyVals action => merge
+  KeyVal action => wrap
+  | KeyVal KeyVals action => merge_right
 
 KeyVal ::=
   Word ':' Word action => keyval
 
-Term ::= 
+RawTerm ::= 
   Word ':' Word ':' Word action => csymbol
   || Word ':' Word action => basic_symbol
   # Special case where the lexeme is a special char :()
   || ':' ':' Word ':' Word action => csymbol
+  |  '^' ':' Word ':' Word action => csymbol
+  |  '[' ':' Word ':' Word action => csymbol
+  |  ']' ':' Word ':' Word action => csymbol
+  |  '{' ':' Word ':' Word action => csymbol
+  |  '}' ':' Word ':' Word action => csymbol
+  |  '(' ':' Word ':' Word action => csymbol
+  |  ')' ':' Word ':' Word action => csymbol
   || ':' Word ':' Word action => nolex_csymbol
 
-Word ~ [^\s\:\(\)\[\]]+
+Word ~ [^\s\:\(\)\[\]\{\}\^]+
 :discard ~ whitespace
 whitespace ~ [\s]+
 
@@ -155,8 +171,11 @@ sub weaken_cmml_to_xmath {
   elsif ($content_head eq 'cn') {
     $attributes->{meaning} = shift @copy;
     @body = $attributes->{meaning}; }
+  elsif ($content_head eq 'bvar') {
+    # Syntax-land is binder unaware
+    return; }
   else {
-    @body = map {weaken_cmml_to_xmath($_,$type)} @copy; }
+    @body = grep {defined} map {weaken_cmml_to_xmath($_,$type)} @copy; }
   
   my $meaning = $attributes->{meaning};
   if ($meaning && (exists $xmath_meaning->{$meaning})) {
@@ -203,11 +222,16 @@ sub CMML_Semantics::apply {
   my (undef, $open, $expr, $arguments, $close ) = @_;
   return ['apply',{},$expr,@$arguments]; }
 
-sub CMML_Semantics::merge {
+sub CMML_Semantics::merge_right {
   my (undef, $expr, $arguments ) = @_;
   (! defined $arguments) ? [$expr] :
     (ref $arguments) ? [$expr,@$arguments] :
       [$expr,$arguments]; }
+
+sub CMML_Semantics::wrap {
+  my (undef, @args ) = @_;
+  [@args]; }
+
 
 sub CMML_Semantics::csymbol {
   my (undef, $lexeme, $colon1, $cd, $colon2, $meaning) = @_;
@@ -225,9 +249,21 @@ sub CMML_Semantics::keyval {
   my (undef,$key,$value)=@_;
   [$key,$value]; }
 
-sub CMML_Semantics::keyvals {
-  my (undef,$open,$keyvals,$close)=@_;
-  $keyvals; }
+sub CMML_Semantics::unwrap {
+  my (undef,$open,$arg,$close)=@_;
+  $arg; }
+
+sub CMML_Semantics::degree {
+  my (undef,$op,$degree_term)=@_;
+  ['degree',{},$degree_term]; }
+
+sub CMML_Semantics::bvar {
+  my (undef,$open,$bvar_term,$close)=@_;
+  ['bvar',{},$bvar_term]; }
+
+sub CMML_Semantics::bvar_degree {
+  my (undef,$open,$bvar_term,$degree,$close)=@_;
+  ['bvar',{},$bvar_term,$degree]; }
 
 sub CMML_Semantics::attach_keyval {
   my (undef,$term,$keyvals) = @_;
