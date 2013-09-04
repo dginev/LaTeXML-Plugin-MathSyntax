@@ -44,6 +44,32 @@ Semantics
     (:arith1:power b:ci n:ci)))
 
 Semantics
+
+'\binom{n}{0}+\binom{n}{1}+\dots+\binom{n}{n}=2^{n}.' => <<'Semantics',
+
+(=:relation1:eq
+  (+:arith1:plus
+    (:combinat1:binomial n:ci 0:cn)
+    (:combinat1:binomial n:ci 1:cn)
+    :underspecified:ellipsis
+    (:combinat1:binomial n:ci n:ci))
+  (:arith1:power 2:cn n:ci))
+
+Semantics
+
+'\binom{n}{0}-\binom{n}{1}+\dots+(-1)^{n}\binom{n}{n}=0.' => <<'Semantics',
+
+(=:relation1:eq
+  (+:arith1:plus
+    (:combinat1:binomial n:ci 0:cn)
+    (-:arith1:unary_minus (:combinat1:binomial n:ci 1:cn))
+    :underspecified:ellipsis
+    (:arith1:times
+      (:arith1:power -1:cn n:ci)
+      (:combinat1:binomial n:ci n:ci)))
+  0:cn )
+
+Semantics
 );
 
 math_tests(type=>'syntax',tests=>\@elementary_algebra_tests);
