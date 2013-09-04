@@ -1,4 +1,4 @@
-=== Challenges
+## Challenges
 
 This is a working document in which I record all non-trivial challenges in mapping between syntax trees and fully semantic operator trees.
 
@@ -10,7 +10,7 @@ The transitions between the two happen in both directions:
 
 * Semantic Analysis - grammar, and post-grammar reasoning for inferring the semantics behind a syntax tree
  
-== Annotation Challenges
+### Annotation Challenges
 
 1. Ellipsis (```\dots```, ```\ldots```, ```\cdots```)
 
@@ -25,7 +25,7 @@ The transitions between the two happen in both directions:
     The worst problem is that if the annotator provides a fully semantic expression, e.g. using a summation with a properly bound variable, there are always several possible syntax trees - the explicit summation tree, as well as a variety of possible rewrites using ellipsis.
 
 
-== Weakening Challenges
+### Weakening Challenges
 
 This is clearly the easier direction of processing. Our annotators create the correct Content MathML expression for the TeX formulas in our databank. These content expressions are used as the gold standard for the parsing process and are the evaluation targets of our test suite. However, a grammar that 
 
@@ -33,4 +33,4 @@ This is clearly the easier direction of processing. Our annotators create the co
 
   1.1 Differentials
 
-== Semantic Analysis Challenges
+### Semantic Analysis Challenges
