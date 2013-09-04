@@ -24,6 +24,7 @@ The transitions between the two happen in both directions:
 
     The worst problem is that if the annotator provides a fully semantic expression, e.g. using a summation with a properly bound variable, there are always several possible syntax trees - the explicit summation tree, as well as a variety of possible rewrites using ellipsis.
 
+    As a stop-gap, consider using the ellipsis symbol: ```:underspecified:ellipsis```
 
 ### Weakening Challenges
 
