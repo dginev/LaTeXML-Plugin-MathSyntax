@@ -18,7 +18,9 @@ my @special_notation_tests = (
 '\langle f,g \rangle' => ':dlmf:distribution', #???
 '\deg' => 'deg:poly1:degree',
 '\prime' => "':calculus1:diff",
-'x^{\prime\prime}' => '(:calculus1:diff {x:ci ^ 2:cn} x:ci)'
+'x^{\prime\prime}' => '(:calculus1:diff {x:ci ^ 2:cn} x:ci)',
+'x^{\prime\prime\prime}' => '(:calculus1:diff {x:ci ^ 3:cn} x:ci)',
+'x^{\prime\prime\prime\prime}' => '(:calculus1:diff {x:ci ^ 4:cn} x:ci)',
 );
 
 math_tests(type=>'syntax',tests=>\@special_notation_tests);
