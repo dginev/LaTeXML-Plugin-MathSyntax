@@ -35,26 +35,31 @@ sub math_tests {
   my $iterator = natatime 2, @{$options{tests}};
 
   while (my ($input,$output) = $iterator->()) {
+    SKIP: {
     my $copy = $input;
     my $array_expected = anno_string_to_array($output);
+    ok($array_expected,"Parse to CMML: $output") or next;
     $array_expected = weaken_cmml($array_expected,$options{type});
-
+    ok($array_expected,"Weaken: $output") or next;
     my $xml_parse = parse_TeX($input,parser=>'LaTeXML::MathSyntax');
+    ok($xml_parse,"Parse TeX: $input") or next;
     my $array_parse = xmldom_to_array($xml_parse);
+    ok($xml_parse,"Convert to array: $input") or next;
     # Unwrap the leading math/xmath if present
-    while ($array_parse->[0] =~ /^ltx:X?Math$/) {
+    while ($array_parse && ($array_parse->[0] =~ /^ltx:X?Math$/)) {
       $array_parse = $array_parse->[2]; }
     my @parse_forest = ();
     # If we're given a parse forest, deal with it appropriately
-    if (($array_parse->[0] eq 'ltx:XMApp') && 
+    if ($array_parse && ($array_parse->[0] eq 'ltx:XMApp') && 
       (defined $array_parse->[1]->{meaning}) &&
       ($array_parse->[1]->{meaning} eq 'cdlf-set')) {
       @parse_forest = @$array_parse[2..scalar(@$array_parse)-1];
     } else {
       @parse_forest = ($array_parse); }
     # TODO: Figure out how to neatly test both syntax and semantics
-    is_syntax(\@parse_forest, $array_expected, "\nFormula: $input\nFound Parses: ".scalar(@parse_forest));
-  }
+    my $s = (@parse_forest > 1) ? 's' : '';
+    is_syntax(\@parse_forest, $array_expected, "Syntax tree match (".scalar(@parse_forest)." parse$s): $input");
+  }}
   done_testing();
 }
 
@@ -120,13 +125,14 @@ RawTerm ::=
   || Word ':' Word action => basic_symbol
   # Special case where the lexeme is a special char :()
   || ':' ':' Word ':' Word action => csymbol
-  |  '^' ':' Word ':' Word action => csymbol
-  |  '[' ':' Word ':' Word action => csymbol
-  |  ']' ':' Word ':' Word action => csymbol
-  |  '{' ':' Word ':' Word action => csymbol
-  |  '}' ':' Word ':' Word action => csymbol
-  |  '(' ':' Word ':' Word action => csymbol
-  |  ')' ':' Word ':' Word action => csymbol
+  # These guys create confusion, we're getting parses for some blatant typos
+  # |  '^' ':' Word ':' Word action => csymbol
+  # |  '[' ':' Word ':' Word action => csymbol
+  # |  ']' ':' Word ':' Word action => csymbol
+  # |  '{' ':' Word ':' Word action => csymbol
+  # |  '}' ':' Word ':' Word action => csymbol
+  # |  '(' ':' Word ':' Word action => csymbol
+  # |  ')' ':' Word ':' Word action => csymbol
   || ':' Word ':' Word action => nolex_csymbol
 
 Word ~ [^\s\:\(\)\[\]\{\}\^]+
@@ -142,8 +148,7 @@ sub anno_string_to_array {
   my $recce = Marpa::R2::Scanless::R->new( { grammar => $string_to_array_grammar } );
   $recce->read( \$annotation_string );
   my $value_ref = $recce->value;
-  my $value = $value_ref ? ${$value_ref} : 'No Parse';
-
+  my $value = $value_ref ? ${$value_ref} : undef;
   return $value; }
 
 sub weaken_cmml {
