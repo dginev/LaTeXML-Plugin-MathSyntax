@@ -1,20 +1,49 @@
 use strict;
 use warnings;
-use LaTeXML::MathSyntax;
 
-#use Test::More tests => 1;
-use Test::More skip_all => "Testbed under construction...";
+use LaTeXML::Util::TestMath;
 
-### Grammar support for notations expressed inside the DLMF
+# Source: http://dlmf.nist.gov/1.2
+my @elementary_algebra_tests = (
+'k \leq n' => '(≤:relation1:leq k:ci n:ci)',
 
-# DLMF:
-# (-)^n for (-1)^n
-# f^n (x) = [ f (x) ] ^ n usually
-# also f ( f ( ... f x ) ) 
-# f^-1 (x) = [inv(f)] (x)
-# (d/dx) ^ n, (-)^n is compositional
-# (z \frac{d}{dx})^n  and also (\frac{d}{dz} z)^n
+'\binom{n}{k}=\frac{n!}{(n-k)!k!}=\binom{n}{n-k}.' => <<'Semantics',
 
-# Grobner bases (lookup!)
-# a := ( 3 > 1)
-# a \neq 2 > 1
+(=:relation1:eq
+  (:combinat1:binomial n:ci k:ci)
+  (:divide:arith1
+    (!:integer1:factorial n:ci)
+    (:arith1:times
+      (!:integer1:factorial (-:arith1:minus n:ci k:ci))
+      (!:integer1:factorial k:ci)))
+  (:combinat1:binomial n:ci (-:arith1:minus n:ci k:ci)))
+
+Semantics
+
+'(a+b)^{n} = a^{n}+\binom{n}{1}a^{{n-1}}b+
+  \binom{n}{2}a^{{n-2}}b^{2}+\dots+
+    \binom{n}{n-1}ab^{{n-1}}+b^{n}.' => <<'Semantics',
+
+(=:relation1:eq
+  (:arith1:power (+:arith1:plus a:ci b:ci) n:ci)
+  (+:arith1:plus
+    (:arith1:power a:ci n:ci)
+    (:arith1:times
+      (:combinat1:binomial n:ci 1:cn)
+      (:arith1:power a:ci (-:arith1:minus n:ci 1:cn))
+      b:ci )
+    (:arith1:times
+      (:combinat1:binomial n:ci 2:cn)
+      (:arith1:power a:ci (-:arith1:minus n:ci 2:cn))
+      (:arith1:power b:ci 2:ci ))
+    :underspecified:ellipsis
+    (:arith1:times
+      (:combinat1:binomial n:ci (-:arith1:minus n:ci 1:cn))
+      a:ci
+      (:arith1:power b:ci (-:arith1:power n:ci 1:cn) ))
+    (:arith1:power b:ci n:ci)))
+
+Semantics
+);
+
+math_tests(type=>'syntax',tests=>\@elementary_algebra_tests);
