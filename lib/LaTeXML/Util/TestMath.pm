@@ -263,6 +263,13 @@ sub CMML_Semantics::new {return {}; }
 
 sub CMML_Semantics::apply {
   my (undef, $open, $expr, $arguments, $close ) = @_;
+  if ($expr->[0] eq 'csymbol') {
+    my $qualified_name = $expr->[1]->{cd}.':'.$expr->[2];
+    if ($qualified_name =~ /^(
+      ((quant1|logic1)\:(forall|exists))
+      | (fns1\:lambda)
+      )$/x)
+    { return ['bind',{},$expr,@$arguments]; }}
   return ['apply',{},$expr,@$arguments]; }
 
 sub CMML_Semantics::merge_right {
