@@ -13,6 +13,8 @@
 package LaTeXML::Util::TestMath;
 use strict;
 use warnings;
+use utf8;
+use Encode;
 
 use Data::Dumper;
 use List::MoreUtils qw/natatime/;
@@ -30,7 +32,9 @@ use Test::Deep::Set;
   sub Test::Deep::supersetof {
     return Test::Deep::Set->new(1, "sup", @_);
   }}
-  
+binmode Test::More->builder->output, ":utf8";
+binmode Test::More->builder->failure_output, ":utf8";
+
 use LaTeXML::Util::Test;
 our @ISA = qw(Exporter);
 our @EXPORT = (qw(math_tests anno_string_to_array weaken_cmml parse_TeX),
@@ -45,9 +49,10 @@ sub math_tests {
 
   while (my ($input,$output) = $iterator->()) {
     my $copy = $input;
-    my $array_expected = anno_string_to_array($output);
+    my ($array_expected,$report) = anno_string_to_array($output);
     unless ($array_expected) {
-      fail("Parse to CMML: $output"); next; }
+      $output=~s/\n$//g;
+      fail("Parse to CMML: $output\n\nGrammar report: $report\n"); next; }
     $array_expected = weaken_cmml($array_expected,$options{type});
     unless ($array_expected) {
       fail("Weaken: $output"); next; }
@@ -104,7 +109,7 @@ sub is_syntax {
   cmp_deeply(
     $candidate_skeletons,
     supersetof($expected_skeleton),
-    #$message."\n".Dumper($expected)); }
+    #$message."\n".Dumper($candidate_skeletons).Dumper($expected_skeleton)) or exit; }
     $message); }
 
 ### Output/annotation manipulation
@@ -176,10 +181,13 @@ END_OF_RULES
 sub anno_string_to_array {
   my ($annotation_string) = @_;
   my $recce = Marpa::R2::Scanless::R->new( { grammar => $string_to_array_grammar } );
-  $recce->read( \$annotation_string );
-  my $value_ref = $recce->value;
+  my $value_ref;
+  eval {
+    local $SIG{__DIE__} = undef;
+    $recce->read( \$annotation_string );
+    $value_ref = $recce->value(); 1; };
   my $value = $value_ref ? ${$value_ref} : undef;
-  return $value; }
+  return ($value,$@); }
 
 sub weaken_cmml {
   my ($cmml_array,$type) = @_;
@@ -226,7 +234,7 @@ sub xmldom_to_array {
     my $attributes = {map {$_->localname() => $_->value()} @attributelist};
     ['ltx:'.$tree->localname,$attributes,(grep {defined} map{xmldom_to_array($_)} $tree->childNodes)]; }
   else {
-    (ref $tree) ? $tree->toString : $tree; }}
+    (ref $tree) ? encode('UTF-8',$tree->toString) : encode('UTF-8',$tree); }}
 
 sub semantic_skeleton {
   my ($array_ref) = @_;
@@ -322,6 +330,7 @@ sub parse_TeX {
     mathparse=>$options{parser},
     defaultresources => 0,
     format=>'dom',
+    inputencoding=>'UTF-8',
     preload=>[
       'LaTeX.pool','amsmath.sty',
       'amsthm.sty',
