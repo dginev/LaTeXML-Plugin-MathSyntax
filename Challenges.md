@@ -26,6 +26,10 @@ The transitions between the two happen in both directions:
 
     As a stop-gap, consider using the ellipsis symbol: ```:underspecified:ellipsis```
 
+2. Symbols without well-established Content Dictionaries
+
+    * Pocchamer's symbol ```:dlmf:pocchamer```
+
 ### Weakening Challenges
 
 This is clearly the easier direction of processing. Our annotators create the correct Content MathML expression for the TeX formulas in our databank. These content expressions are used as the gold standard for the parsing process and are the evaluation targets of our test suite. However, a grammar that 

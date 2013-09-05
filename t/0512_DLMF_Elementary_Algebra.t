@@ -85,6 +85,30 @@ Semantics
 
 Semantics
 
+'\binom{n}{k}=\frac{n(n-1)\cdots(n-k+1)}{k!}%
+  = \frac{(-1)^{k}\left(-n\right)_{{k}}}{k!}%
+  = (-1)^{k}\binom{k-n-1}{k}.' => <<'Semantics',
+
+(=:relation1:eq
+  (:combinat1:binomial n:ci k:ci)
+  (:arith1:divide
+    (:arith1:times
+      n:ci
+      (-:arith1:minus n:ci 1:cn)
+      :underspecified:ellipsis
+      (+:arith1:plus n:ci (-:arith1:unary_minus k:ci) 1:cn))
+    (!:integer1:factorial k:ci))
+  (:arith1:divide
+    (:arith1:times
+      (:arith1:power -1:cn k:ci)
+      (:dlmf:pocchamer (-:arith1:unary_minus n:ci) k:ci))
+    (!:integer1:factorial k:ci))
+  (:arith1:times
+    (:arith1:power -1:cn k:ci)
+    (:combinat1:binomial (-:arith1:minus k:ci n:ci 1:cn) k:ci))
+)
+Semantics
+
 );
 
 math_tests(type=>'syntax',tests=>\@elementary_algebra_tests);
