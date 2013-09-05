@@ -27,9 +27,7 @@ The transitions between the two happen in both directions:
   As a stop-gap, consider using the ellipsis symbol: ```:underspecified:ellipsis```
 
 2. Symbols without well-established Content Dictionaries
-
   * Pocchamer's symbol ```:dlmf:pocchamer```
-
 3. WLOG lists of constants - e.g. $\alpha_1, \ldots, \alpha_n$
 
   One technique is to pre-allocate a list of undetermined, but distinct constants, without loss of generality. Those constants are later used as place-holder variables in proofs, to demonstrate their generality. The problem with formalizing them in Content MathML is that usally more context than the expression itself is necessary. Additionally, they are usually best introduced as a universally quantified vector, with a condition on each pair of its elements not being equal. That introduction changes the syntax tree drastically, unless it is properly weakened.
