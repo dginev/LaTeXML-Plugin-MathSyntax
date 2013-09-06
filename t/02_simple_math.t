@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-
+use File::Basename;
 use LaTeXML::Util::TestMath;
 
 my @simple_math_tests = (
@@ -22,4 +22,6 @@ my @simple_math_tests = (
 Semantics
 );
 
-math_tests(type=>'syntax',tests=>\@simple_math_tests);
+my $log = __FILE__;
+$log =~ s/\.t$/.html/;
+math_tests(type=>'syntax',log=>$log,tests=>\@simple_math_tests);

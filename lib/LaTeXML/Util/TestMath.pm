@@ -22,6 +22,7 @@ use Scalar::Util qw/blessed/;
 
 use LaTeXML::Converter;
 use LaTeXML::Util::Config;
+use LaTeXML::Util::TestMath::Report;
 
 use Test::More;
 use Test::Deep qw/cmp_deeply supersetof/;
@@ -46,22 +47,31 @@ sub math_tests {
   my (%options) = @_;
   $options{tests} = [] unless defined $options{tests};
   my $iterator = natatime 2, @{$options{tests}};
+  my $report = [];
 
   while (my ($input,$output) = $iterator->()) {
     my $copy = $input;
-    my ($array_expected,$report) = anno_string_to_array($output);
+    my ($array_expected,$grammar_report) = anno_string_to_array($output);
     unless ($array_expected) {
       $output=~s/\n$//g;
-      fail("Parse to CMML: $output\n\nGrammar report: $report\n"); next; }
-    $array_expected = weaken_cmml($array_expected,$options{type});
-    unless ($array_expected) {
-      fail("Weaken: $output"); next; }
+      my $message = "Parse to CMML: $output\n\nGrammar report: $grammar_report\n";
+      push @$report, {tex=>$input,message=>$message} if $options{log};
+      fail($message); next; }
+    my $weakened_expected = weaken_cmml($array_expected,$options{type});
+    unless ($weakened_expected) {
+      my $message = "Weaken: $output";
+      push @$report, {tex=>$input,semantics=>$array_expected,message=>$message} if $options{log};
+      fail($message); next; }
     my $xml_parse = parse_TeX($input,parser=>'LaTeXML::MathSyntax');
     unless ($xml_parse) {
-      fail("Parse TeX: $input"); next; }
+      my $message = "Parse TeX: $input";
+      push @$report, {tex=>$input,syntax=>$weakened_expected,semantics=>$array_expected,message=>$message} if $options{log};
+      fail($message); next; }
     my $array_parse = xmldom_to_array($xml_parse);
     unless ($xml_parse) {
-      fail("Convert to array: $input"); next; }
+      my $message = "Convert to array: $input";
+      push @$report, {tex=>$input,syntax=>$weakened_expected,semantics=>$array_expected,message=>$message} if $options{log};
+      fail($message); next; }
     # Unwrap the leading math/xmath if present
     while ($array_parse && ($array_parse->[0] =~ /^ltx:X?Math$/)) {
       $array_parse = $array_parse->[2]; }
@@ -75,8 +85,18 @@ sub math_tests {
       @parse_forest = ($array_parse); }
     # TODO: Figure out how to neatly test both syntax and semantics
     my $s = (@parse_forest > 1) ? 's' : '';
-    is_syntax(\@parse_forest, $array_expected, "Syntax tree match (".scalar(@parse_forest)." parse$s):\n $input\n");
+    my $success = is_syntax(\@parse_forest, $array_expected, "Syntax tree match (".scalar(@parse_forest)." parse$s):\n $input\n");
+    if ($options{log}) {
+      my $message;
+      if ($success) {
+        $message = 'Success.'; }
+      else {
+        $message = "Syntax tree match (".scalar(@parse_forest)." parse$s):\n $input\n"; }
+      push @$report, {tex=>$input,parse=>$array_parse,
+        syntax=>$weakened_expected,semantics=>$array_expected,message=>$message}
+    }
   }
+  math_report($options{log},$report) if $options{log};
   done_testing();
 }
 
