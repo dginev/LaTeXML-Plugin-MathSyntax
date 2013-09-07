@@ -59,19 +59,19 @@ sub math_tests {
       fail($message); next; }
     my $weakened_expected = weaken_cmml($array_expected,$options{type});
     unless ($weakened_expected) {
-      my $message = "Weaken: $output";
+      my $message = "Weaken Semantics";
       push @$report, {tex=>$input,semantics=>$array_expected,message=>$message} if $options{log};
-      fail($message); next; }
+      fail($message.": $output"); next; }
     my $xml_parse = parse_TeX($input,parser=>'LaTeXML::MathSyntax');
     unless ($xml_parse) {
-      my $message = "Parse TeX: $input";
+      my $message = "Parsing TeX";
       push @$report, {tex=>$input,syntax=>$weakened_expected,semantics=>$array_expected,message=>$message} if $options{log};
-      fail($message); next; }
+      fail($message.": $input"); next; }
     my $array_parse = xmldom_to_array($xml_parse);
     unless ($xml_parse) {
-      my $message = "Convert to array: $input";
+      my $message = "Convert parse to array";
       push @$report, {tex=>$input,syntax=>$weakened_expected,semantics=>$array_expected,message=>$message} if $options{log};
-      fail($message); next; }
+      fail($message.": $input"); next; }
     # Unwrap the leading math/xmath if present
     while ($array_parse && ($array_parse->[0] =~ /^ltx:X?Math$/)) {
       $array_parse = $array_parse->[2]; }
@@ -85,17 +85,16 @@ sub math_tests {
       @parse_forest = ($array_parse); }
     # TODO: Figure out how to neatly test both syntax and semantics
     my $s = (@parse_forest > 1) ? 's' : '';
-    my $success = is_syntax(\@parse_forest, $array_expected, "Syntax tree match (".scalar(@parse_forest)." parse$s):\n $input\n");
+    my $success = is_syntax(\@parse_forest, $weakened_expected, "Syntax tree match (".scalar(@parse_forest)." parse$s):\n $input\n");
     if ($options{log}) {
       my $message;
       if ($success) {
         $message = 'Success.'; }
       else {
-        $message = "Syntax tree match (".scalar(@parse_forest)." parse$s):\n $input\n"; }
+        $message = "Syntax tree match (".scalar(@parse_forest)." parse$s)"; }
       push @$report, {tex=>$input,parse=>$array_parse,
         syntax=>$weakened_expected,semantics=>$array_expected,message=>$message}
-    }
-  }
+    }}
   math_report($options{log},$report) if $options{log};
   done_testing();
 }
@@ -225,7 +224,7 @@ sub weaken_cmml_to_xmath {
   my $content_head = shift @copy;
   my $head = $xmath_name->{$content_head};
   my $attributes = shift @copy;
-  $attributes->{omdcd} = delete $attributes->{cd} if exists $attributes->{cd};
+  $attributes->{omcd} = delete $attributes->{cd} if exists $attributes->{cd};
   my @body;
   if ($content_head eq 'csymbol') {
     my $lexeme = delete $attributes->{lexeme};
@@ -316,7 +315,7 @@ sub CMML_Semantics::basic_symbol {
   [$meaning,{},$lexeme]; }
 
 sub CMML_Semantics::keyval {
-  my (undef,$key,$value)=@_;
+  my (undef,$key,$separator,$value)=@_;
   [$key,$value]; }
 
 sub CMML_Semantics::unwrap {
@@ -339,7 +338,7 @@ sub CMML_Semantics::attach_keyval {
   my (undef,$term,$keyvals) = @_;
   my $attr = $term->[1];
   foreach my $keyval(@$keyvals) {
-    $attr->{$keyval->[1]} = $keyval->[2];
+    $attr->{$keyval->[0]} = $keyval->[1];
   }
   $term; }
 

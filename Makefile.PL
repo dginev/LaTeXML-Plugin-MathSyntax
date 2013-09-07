@@ -23,10 +23,10 @@ WriteMakefile(
   PREREQ_PM => { 
     'LaTeXML'=>0,
     'Marpa::R2'=>0,
-    'SVG::Graph'=>0,
     'Test::Deep'=>0,
     'List::MoreUtils'=>0,
-    'HTML::Entities'=>0
+    'HTML::Entities'=>0,
+    'Data::Dump'=>0
   },
 );
 
