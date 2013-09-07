@@ -28,4 +28,4 @@ my @special_notation_tests = (
   '((:calculus1:nthdiff 4:cn (:fns1:lambda {x:ci} x:ci)) x:ci)',
 );
 
-math_tests(type=>'syntax',tests=>\@special_notation_tests);
+math_tests(type=>'syntax',log=>__FILE__,tests=>\@special_notation_tests);

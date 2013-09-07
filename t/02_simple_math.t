@@ -22,6 +22,4 @@ my @simple_math_tests = (
 Semantics
 );
 
-my $log = __FILE__;
-$log =~ s/\.t$/.html/;
-math_tests(type=>'syntax',log=>$log,tests=>\@simple_math_tests);
+math_tests(type=>'syntax',log=>__FILE__,tests=>\@simple_math_tests);

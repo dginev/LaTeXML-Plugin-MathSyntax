@@ -207,22 +207,22 @@ Semantics
 # # TODO: How do we model here?
 # #'\alpha_1, \alpha_2, \ldots, \alpha_n'
 
-# # '\frac{f(x)}{(x-\alpha_{1})(x-\alpha_{2})\cdots(x-\alpha_{n})} =%
-# #   \frac{A_{1}}{x-\alpha_{1}}+%
-# #   \frac{A_{2}}{x-\alpha_{2}}+\dots+\frac{A_{n}}{x-\alpha_{n}},' => <<'Semantics',
+# '\frac{f(x)}{(x-\alpha_{1})(x-\alpha_{2})\cdots(x-\alpha_{n})} =%
+#   \frac{A_{1}}{x-\alpha_{1}}+%
+#   \frac{A_{2}}{x-\alpha_{2}}+\dots+\frac{A_{n}}{x-\alpha_{n}},' => <<'Semantics',
 
-# # (=:relation1:eq
-# #   (:arith1:divide (f:ci x:ci)
-# #     (:arith1:times
-# #       (-:arith1:minus x:ci alpha1:ci)
-# #       (-:arith1:minus x:ci alpha2:ci)
-# #       :underspecified:ellipsis
-# #       (-:arith1:minus x:ci alphan:ci)))
-# #   (+:arith1:plus
-# #     (:arith1:divide A1:ci (-:arith1:minus x:ci alpha1:ci))
-# #     (:arith1:divide A2:ci (-:arith1:minus x:ci alpha2:ci))
-# #     :underspecified:ellipsis
-# #     (:arith1:divide An:ci (-:arith1:minus x:ci alphan:ci))))
+# (=:relation1:eq
+#   (:arith1:divide (f:ci x:ci)
+#     (:arith1:times
+#       (-:arith1:minus x:ci alpha1:ci)
+#       (-:arith1:minus x:ci alpha2:ci)
+#       :underspecified:ellipsis
+#       (-:arith1:minus x:ci alphan:ci)))
+#   (+:arith1:plus
+#     (:arith1:divide A1:ci (-:arith1:minus x:ci alpha1:ci))
+#     (:arith1:divide A2:ci (-:arith1:minus x:ci alpha2:ci))
+#     :underspecified:ellipsis
+#     (:arith1:divide An:ci (-:arith1:minus x:ci alphan:ci))))
 
 # # Semantics
 
@@ -237,8 +237,8 @@ Semantics
 # Semantics
 # '1' => <<'Semantics',
 # 1:cn
-# Semantics
+# # Semantics
 
 );
 
-math_tests(type=>'syntax',tests=>\@elementary_algebra_tests);
+math_tests(type=>'syntax',log=>__FILE__,tests=>\@elementary_algebra_tests);
