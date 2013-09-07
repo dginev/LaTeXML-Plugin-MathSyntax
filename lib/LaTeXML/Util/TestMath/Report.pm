@@ -15,17 +15,12 @@ use strict;
 use warnings;
 use utf8;
 use Encode;
-use Data::Dumper;
+use Data::Dump qw(dump);
 use Scalar::Util qw/blessed/;
 use HTML::Entities;
 
-use SVG::Graph;
 use LaTeXML::Converter;
 use LaTeXML::Util::Config;
-
-use SVG::Graph;
-use SVG::Graph::Data;
-use SVG::Graph::Data::Datum;
 
 use Exporter;
 our @ISA = qw(Exporter);
@@ -47,6 +42,8 @@ sub math_report {
    th {text-align:left}
    tr td {
     border-bottom:1pt solid black;
+    valign: top;
+    vertical-align:text-top;
    }
    tr th {
     border-bottom:1pt solid black;
@@ -65,7 +62,11 @@ sub math_report {
     <th>Log Message</th>
   </tr>
 HEAD
-  foreach my $entry (@$entries) {
+  my $counter = 0;
+  my $total = 3 * scalar(@$entries);
+  my $progressString;
+  local $| = 1; # Or use IO::Handle; STDOUT->autoflush;
+  foreach my $entry (@$entries) {  
     my ($tex,$parse,$expected_syntax,$expected_semantics,$message) = 
       map {$entry->{$_}} qw/tex parse syntax semantics message/;
     # HTML-encode the plain text messages
@@ -77,26 +78,51 @@ HEAD
     my $mathml;
     $mathml = $response->{result} || $tex;
     $report .= "<td>$mathml</td>";
+
     # 2. Input Parse Forest -> SVG
+    $progressString = log_drawing(++$counter,$total, $progressString);
     my $graphed_parse = draw_svg($parse);
     $report .= "<td>$graphed_parse</td>";
     # 3. Expected Syntax Tree -> SVG
+    $progressString = log_drawing(++$counter,$total, $progressString);
     my $graphed_syntax = draw_svg($expected_syntax);
     $report .= "<td>$graphed_syntax</td>";
     # 4. Expected Semantic Tree -> SVG
+    $progressString = log_drawing(++$counter,$total, $progressString);
     my $graphed_semantics = draw_svg($expected_semantics);
     $report .= "<td>$graphed_semantics</td>";
     # 5. Message report
     $report .= "<td>$message</td>";
     $report.='</tr>';
-
   }
   $report .= '</table></body></html>';
+  $file =~ s/\.t$//;
+  $file.='.html'; # Always a new file
   open my $fh ,'>', $file;
   print $fh encode('UTF-8',$report);
   close $fh;
+  log_drawing_clear($progressString);
+  1;
 }
 
-sub draw_svg {"TODO";}
+sub draw_svg {
+  my $array = shift;
+  my $result = encode_entities(dump($array));
+  $result =~ s/\n/<br>\n/g; 
+  $result =~ s/\s/&nbsp;/g; 
+  return $result; }
+
+sub log_drawing {
+  my ($counter,$total,$progressString)=@_;
+  # remove prev progress
+  print STDERR "\b" x length($progressString) if defined $progressString;
+  # do lots of processing, update $counter
+  $progressString = " Drawing SVG Report ($counter / $total)"; # No more newline
+  print STDERR $progressString; # Will print, because auto-flush is on
+  # end of processing
+  return $progressString; }
+sub log_drawing_clear {
+  my ($progressString)=@_;
+  print STDERR "\b" x length($progressString) if defined $progressString; }
 
 1;
