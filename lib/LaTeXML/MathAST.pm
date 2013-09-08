@@ -34,7 +34,7 @@ sub final_AST {
 sub finalize { 
   #print STDERR "\nPruning: " if (exists $_[0]->{__PRUNE});
   #print STDERR "\nFinal state:\n",Dumper($_[0]->{atoms}),"\n\n";
-  #Marpa::R2::Context::bail('PRUNE') if (exists $_[0]->{__PRUNE});
+  Marpa::R2::Context::bail('PRUNE') if (exists $_[0]->{__PRUNE});
   $_[1]; }
 sub first_arg {
   my ($state,$arg) = @_;
@@ -102,6 +102,8 @@ sub concat_apply_right {
 
 sub infix_apply {
   my ( $state, $t1, $c, $op, $c2, $t2, $type) = @_;
+  $state->mark_use($t1,'scalar') unless (ref $t1 eq 'ARRAY');
+  $state->mark_use($t2,'scalar') unless (ref $t1 eq 'ARRAY');
   my $app = ApplyNary(MaybeLookup($op),$t1,$t2); 
   $app->[1]->{'cat'}=$type;
   $app;}
@@ -208,9 +210,10 @@ sub mark_use {
     my $lex = $t2->textContent;
     my $current = $state->{atoms}->{$lex};
     if (defined $current) {
-      $state->{__PRUNE}=1 if ($current ne $value);
-      $state->{atoms}->{$lex.'1'}=$value if ($current ne $value);
+      Marpa::R2::Context::bail('PRUNE') if ($current ne $value);
     } else {
+      # Don't allow numbers as functions, unless 1(x)
+      Marpa::R2::Context::bail('PRUNE') if (($value eq 'function') && ($lex =~ /^\d+$/) && ($lex ne '1'));
       $state->{atoms}->{$lex} = $value;
     }
   }
