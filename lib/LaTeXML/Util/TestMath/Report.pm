@@ -14,6 +14,7 @@ package LaTeXML::Util::TestMath;
 use strict;
 use warnings;
 use utf8;
+use feature 'switch';
 use Encode;
 use Data::Dump qw(dump);
 use Scalar::Util qw/blessed/;
@@ -21,6 +22,8 @@ use HTML::Entities;
 
 use LaTeXML::Converter;
 use LaTeXML::Util::Config;
+
+use Graph::Easy;
 
 use Exporter;
 our @ISA = qw(Exporter);
@@ -77,7 +80,7 @@ HEAD
     my $response = $converter->convert($tex);
     my $mathml;
     $mathml = $response->{result} || $tex;
-    $report .= "<td>$mathml</td>";
+    $report .= "<td style='vertical-align:middle; font-size: 300%'>$mathml</td>";
 
     # 2. Input Parse Forest -> SVG
     $progressString = log_drawing(++$counter,$total, $progressString);
@@ -92,7 +95,7 @@ HEAD
     my $graphed_semantics = draw_svg($expected_semantics);
     $report .= "<td>$graphed_semantics</td>";
     # 5. Message report
-    $report .= "<td>$message</td>";
+    $report .= "<td style='vertical-align:middle;''>$message</td>";
     $report.='</tr>';
   }
   $report .= '</table></body></html>';
@@ -107,10 +110,71 @@ HEAD
 
 sub draw_svg {
   my $array = shift;
-  my $result = encode_entities(dump($array));
-  $result =~ s/\n/<br>\n/g; 
-  $result =~ s/\s/&nbsp;/g; 
-  return $result; }
+  my $graph = Graph::Easy->new();
+  add_nodes($graph,$array,0);
+  add_edges($graph,$array);
+  $graph->timeout(30);
+  my $drawn = $graph->as_svg();
+  $drawn =~ s/\s\d+\^(<\/\w+>)$/$1/mg;
+  return $drawn; }
+
+sub add_nodes {
+  my ($graph,$array,$counter) = @_;
+  $counter++;
+  my $color = element_to_color($array->[0]);
+  my $attr = $array->[1];
+  my $label = $array->[0];
+  $label =~ s/^(\w+)\://;# remove namespace
+  my $value = '';
+  foreach my $subtree(@$array[2..scalar(@$array)-1]) {
+    next if ref $subtree;
+    $value .= $subtree;  }
+  $label.=":$value" if $value;
+  #$label.="\\r";
+  $label .= " $counter^";
+  #$label .= "\x{2062}" x $counter;
+  $label.="\\r";
+  if (%$attr) {
+    my $atrr_count = 0;
+    foreach my $key (grep {/^[^_]/} sort keys %$attr) {
+      my $value = $attr->{$key};
+      $value //= '';
+      $label .= "$key:$value\\r";
+    }
+    $label =~ s/\\r$//;
+  }
+  $array->[0] = $graph->add_node($label);
+  $array->[0]->set_attribute('color',$color);
+  foreach my $subtree(@$array[2..scalar(@$array)-1]) {
+    next unless ref $subtree;
+    $counter = add_nodes($graph,$subtree,$counter); }
+  return $counter; }
+
+sub add_edges {
+  my ($graph,$array) = @_;
+  my $head = $array->[0];
+  my $offset = 0;
+  my $first = 1;
+  foreach my $subtree(@$array[2..scalar(@$array)-1]) {
+    next unless ref $subtree;
+    my $child = $subtree->[0];
+    $child->set_attribute('origin',$head->name);
+    my $e = $graph->add_edge($head,$child);
+    my $child_width = add_edges($graph,$subtree);
+    my $offset_string;
+    if ($first) {
+      $first = 0;
+      # Applied/bound elements should be treated as symbols
+      $child->set_attribute('color',element_to_color('csymbol'));
+      #$e->set_attribute('start','top,0');
+      $offset_string = "$child_width,0"; }
+    else {
+      $offset_string = "$offset,2";
+      $e->set_attribute('start','south');
+      $offset += $child_width; }
+    $child->set_attribute('offset',$offset_string);
+  }
+  return $offset+2; }
 
 sub log_drawing {
   my ($counter,$total,$progressString)=@_;
@@ -126,3 +190,12 @@ sub log_drawing_clear {
   print STDERR "\b" x length($progressString) if defined $progressString; }
 
 1;
+
+sub element_to_color {
+  given (shift) {
+    when (/^apply|XMApp$/) {'orange'}
+    when (/^XMTok|cn|ci$/) {'black'}
+    when (/^bind|bvar$/) {'red'}
+    when (/^csymbol$/) {'blue'}
+    default {'black'}
+  };}
