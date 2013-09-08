@@ -18,7 +18,7 @@ my @special_notation_tests = (
 'n' => 'n:ci[type:integer]',
 '\langle f,g \rangle' => ':dlmf:distribution', #???
 '\deg' => 'deg:poly1:degree',
-'\prime' => "':calculus1:diff",
+'\prime' => "′:calculus1:diff",
 #'x^{\prime\prime}' => 
 '1' =>
   '((:calculus1:nthdiff 2:cn (:fns1:lambda {x:ci} x:ci)) x:ci)',

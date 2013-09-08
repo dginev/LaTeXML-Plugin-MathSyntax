@@ -45,8 +45,8 @@ sub math_report {
    th {text-align:left}
    tr td {
     border-bottom:1pt solid black;
-    valign: top;
-    vertical-align:text-top;
+    valign: middle;
+    vertical-align:middle;
    }
    tr th {
     border-bottom:1pt solid black;
@@ -104,7 +104,8 @@ HEAD
   $file =~ s/\.t$//;
   $file.='.html'; # Always a new file
   open my $fh ,'>', $file;
-  print $fh encode('UTF-8',$report);
+  binmode($fh,':encoding(UTF-8)');
+  print $fh $report;#encode('UTF-8',$report);
   close $fh;
   log_drawing_clear($progressString);
   1;
@@ -112,6 +113,7 @@ HEAD
 
 sub draw_svg {
   my $array = shift;
+  return "Failed." unless $array;
   #print STDERR dump($array);
   my $graph = Graph::Easy->new();
   add_nodes($graph,$array,0);
@@ -127,11 +129,11 @@ sub add_nodes {
   my $color = element_to_color($array->[0]);
   my $attr = $array->[1];
   my $label = $array->[0];
-  $label =~ s/^(\w+)\://;# remove namespace
+  $label =~ s/^(\w+)\:// if $label;# remove namespace
   my $value = '';
   foreach my $subtree(@$array[2..scalar(@$array)-1]) {
     next if ref $subtree;
-    $value .= $subtree;  }
+    $value .= decode('UTF-8',$subtree);  }
   $label.=":$value" if $value;
   #$label.="\\r";
   $label .= " $counter^";
@@ -202,6 +204,7 @@ sub log_drawing_clear {
 
 sub element_to_color {
   given (shift) {
+    when (undef) {'black'}
     when (/^apply|XMApp$/) {'orange'}
     when (/^XMTok|cn|ci$/) {'black'}
     when (/^bind|bvar$/) {'red'}
