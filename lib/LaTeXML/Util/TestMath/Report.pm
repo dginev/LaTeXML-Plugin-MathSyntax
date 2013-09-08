@@ -80,7 +80,9 @@ HEAD
     my $response = $converter->convert($tex);
     my $mathml;
     $mathml = $response->{result} || $tex;
-    $report .= "<td style='vertical-align:middle; font-size: 300%'>$mathml</td>";
+    my $math_color = '';
+    $math_color = 'color:red;' if ($message !~ /success/i);
+    $report .= "<td style='vertical-align:middle; font-size: 300%; $math_color'>$mathml</td>";
 
     # 2. Input Parse Forest -> SVG
     $progressString = log_drawing(++$counter,$total, $progressString);
@@ -95,7 +97,7 @@ HEAD
     my $graphed_semantics = draw_svg($expected_semantics);
     $report .= "<td>$graphed_semantics</td>";
     # 5. Message report
-    $report .= "<td style='vertical-align:middle;''>$message</td>";
+    $report .= "<td style='vertical-align:middle;'>$message</td>";
     $report.='</tr>';
   }
   $report .= '</table></body></html>';
@@ -110,6 +112,7 @@ HEAD
 
 sub draw_svg {
   my $array = shift;
+  #print STDERR dump($array);
   my $graph = Graph::Easy->new();
   add_nodes($graph,$array,0);
   add_edges($graph,$array);
@@ -153,6 +156,7 @@ sub add_nodes {
 sub add_edges {
   my ($graph,$array) = @_;
   my $head = $array->[0];
+  my $max_width = 2;
   my $offset = 0;
   my $first = 1;
   foreach my $subtree(@$array[2..scalar(@$array)-1]) {
@@ -167,14 +171,19 @@ sub add_edges {
       # Applied/bound elements should be treated as symbols
       $child->set_attribute('color',element_to_color('csymbol'));
       #$e->set_attribute('start','top,0');
-      $offset_string = "$child_width,0"; }
+      $max_width += $child_width;
+      $e->set_attribute('start','east');
+      $e->set_attribute('end','west');
+      $offset_string = "2,0"; }
     else {
-      $offset_string = "$offset,2";
-      $e->set_attribute('start','south');
+      $offset_string = "$offset,4";
+      $e->set_attribute('start','south,0');
+      $e->set_attribute('end','north,0');
       $offset += $child_width; }
     $child->set_attribute('offset',$offset_string);
   }
-  return $offset+2; }
+  $max_width = $offset if $max_width < $offset;
+  return $max_width; }
 
 sub log_drawing {
   my ($counter,$total,$progressString)=@_;

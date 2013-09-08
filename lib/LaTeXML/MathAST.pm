@@ -77,17 +77,17 @@ sub concat_apply {
 sub concat_apply_factor {
   my ( $state, $t1, $c, $t2) = @_;
   # Only for NON-atomic structures!
-  #Marpa::R2::Context::bail('PRUNE') unless (((ref $t1) eq 'ARRAY') && ((ref $t2) eq 'ARRAY'));
-  concat_apply($state, $t1, $c, $t2,'factor');
-}
+  Marpa::R2::Context::bail('PRUNE') unless (((ref $t1) eq 'ARRAY') && ((ref $t2) eq 'ARRAY'));
+  concat_apply($state, $t1, $c, $t2,'factor'); }
+
 # Semantics: FA always scalar
 sub concat_apply_left {
   my ( $state, $t1, $c, $t2) = @_;
   # if t2 is an atom - mark as scalar or fail if inconsistent
   $state->mark_use($t1,'scalar');
   $state->mark_use($t2,'scalar');
-  concat_apply($state, $t1, $c, $t2,'factor');
-}
+  concat_apply($state, $t1, $c, $t2,'factor'); }
+
 # Semantics: FA always function
 sub concat_apply_right {
   my ( $state, $t1, $c, $t2) = @_;  

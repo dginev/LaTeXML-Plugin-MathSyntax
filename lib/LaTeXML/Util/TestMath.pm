@@ -223,26 +223,26 @@ sub weaken_cmml_to_xmath {
   my @copy = @$array;
   my $content_head = shift @copy;
   my $head = $xmath_name->{$content_head};
-  my $attributes = shift @copy;
-  $attributes->{omcd} = delete $attributes->{cd} if exists $attributes->{cd};
+  my %attributes = %{shift @copy};
+  $attributes{omcd} = delete $attributes{cd} if exists $attributes{cd};
   my @body;
   if ($content_head eq 'csymbol') {
-    my $lexeme = delete $attributes->{lexeme};
+    my $lexeme = delete $attributes{lexeme};
     @body = $lexeme ? ($lexeme) : ();
-    $attributes->{meaning} = shift @copy; }
+    $attributes{meaning} = shift @copy; }
   elsif ($content_head eq 'cn') {
-    $attributes->{meaning} = shift @copy;
-    @body = $attributes->{meaning}; }
+    $attributes{meaning} = shift @copy;
+    @body = $attributes{meaning}; }
   elsif ($content_head eq 'bvar') {
     # Syntax-land is binder unaware
     return; }
   else {
     @body = grep {defined} map {weaken_cmml_to_xmath($_,$type)} @copy; }
   
-  my $meaning = $attributes->{meaning};
+  my $meaning = $attributes{meaning};
   if ($meaning && (exists $xmath_meaning->{$meaning})) {
-    $attributes->{meaning} = $xmath_meaning->{$meaning}; }
-  return [$head, $attributes, @body]; }
+    $attributes{meaning} = $xmath_meaning->{$meaning}; }
+  return [$head, \%attributes, @body]; }
 
 sub xmldom_to_array {
   my ($tree) = @_;
@@ -265,6 +265,8 @@ sub semantic_skeleton {
   $attr = {omcd=>$attr->{omcd},meaning=>$attr->{meaning}};
   my @body = map {semantic_skeleton($_)} @copy;
   [$head,$attr,@body]; }
+
+our $inv_times = encode('UTF-8',"\x{2062}");
 sub syntactic_skeleton {
   my ($array_ref) = @_;
   return $array_ref unless (ref $array_ref eq 'ARRAY');
@@ -273,6 +275,8 @@ sub syntactic_skeleton {
   my $attr = shift @copy;
   # OMCD and Meaning need to match up _ONLY_
   my @body = map {syntactic_skeleton($_)} @copy;
+  if ($attr->{meaning} && ($attr->{meaning} eq 'times')) {
+    @body = grep {(ref $_) || ($_ ne $inv_times)} @body; }
   [$head,{},@body]; }
 
 
