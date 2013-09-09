@@ -50,7 +50,7 @@ FactorArgument ::=
   | OPEN _ CLOSE  action => fenced_empty
   | OPEN _ Entry _ CLOSE  action => fenced
   | OPEN _ Vector _ CLOSE  action => fenced # vectors are factors
-  | FactorArgument _ SUPOP action=>postscript_apply
+  | FactorArgument _ Supop action=>postscript_apply
   | FactorArgument _ POSTSUPERSCRIPT action=>postscript_apply
   | FactorArgument _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ FactorArgument action=>prescript_apply
@@ -83,7 +83,7 @@ TermArgument ::=
   | OPEN _ Sequence _ CLOSE  action => fenced
   # TODO: enable Modifiers
   # | TermArgument _ RELOP _ Term  action => infix_apply_term
-  | TermArgument _ SUPOP action=>postscript_apply
+  | TermArgument _ Supop action=>postscript_apply
   | TermArgument _ POSTSUPERSCRIPT action=>postscript_apply
   | TermArgument _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ TermArgument action=>prescript_apply
@@ -123,7 +123,7 @@ Formula ::=
   | PostRelative
   | Formula _ LOGICOP _ Relative  action => infix_apply_formula
   | Formula _ LOGICOP _ FormulaArgument  action => infix_apply_formula
-  | FormulaArgument _ SUPOP action=>postscript_apply
+  | FormulaArgument _ Supop action=>postscript_apply
   | FormulaArgument _ POSTSUPERSCRIPT action=>postscript_apply
   | FormulaArgument _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ FormulaArgument action=>prescript_apply
@@ -200,7 +200,7 @@ FormulaArgument ::=
   FormulaArgument _ COLON _ Type  action => infix_apply_formula
   | OPEN _ Formula _ CLOSE  action => fenced
   # | FormulaArgument ::= FormulaArgument _ Relop _ Term  action => infix_apply_formula
-  | FormulaArgument _ SUPOP action=>postscript_apply
+  | FormulaArgument _ Supop action=>postscript_apply
   | FormulaArgument _ POSTSUPERSCRIPT action=>postscript_apply
   | FormulaArgument _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ FormulaArgument action=>prescript_apply
@@ -210,7 +210,7 @@ FormulaArgument ::=
 # Examples???
 RelativeFormulaArgument ::= 
   OPEN _ RelativeFormula _ CLOSE  action => fenced
-  | RelativeFormulaArgument _ SUPOP action=>postscript_apply
+  | RelativeFormulaArgument _ Supop action=>postscript_apply
   | RelativeFormulaArgument _ POSTSUPERSCRIPT action=>postscript_apply
   | RelativeFormulaArgument _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ RelativeFormulaArgument action=>prescript_apply
@@ -274,7 +274,7 @@ Operator ::=
   | Relop
   | Metarelop
   | Arrow
-  | SUPOP
+  | Supop
   | Bigop
 
 # XIV. Lexicon adjustments
@@ -286,7 +286,7 @@ Operator ::=
 Relop ::=
   RELOP
   | EQUALS
-  | Relop _ SUPOP action=>postscript_apply
+  | Relop _ Supop action=>postscript_apply
   | Relop _ POSTSUPERSCRIPT action=>postscript_apply
   | Relop _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ Relop action=>prescript_apply
@@ -296,7 +296,7 @@ Metarelop ::=
   EQUALS
   | METARELOP
   | VERTBAR
-  | Metarelop _ SUPOP action=>postscript_apply
+  | Metarelop _ Supop action=>postscript_apply
   | Metarelop _ POSTSUPERSCRIPT action=>postscript_apply
   | Metarelop _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ Metarelop action=>prescript_apply
@@ -310,7 +310,7 @@ Addop ::=
   | MODIFIER
   # (-) ?? TODO: what about the other ops?
   | OPEN _ Addop _ CLOSE  action => fenced
-  | Addop _ SUPOP action=>postscript_apply
+  | Addop _ Supop action=>postscript_apply
   | Addop _ POSTSUPERSCRIPT action=>postscript_apply
   | Addop _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ Addop action=>prescript_apply
@@ -321,7 +321,7 @@ Mulop ::=
   # TODO: Think about PERIOD, lex?
   | PERIOD
   | VERTBAR
-  | Mulop _ SUPOP action=>postscript_apply
+  | Mulop _ Supop action=>postscript_apply
   | Mulop _ POSTSUPERSCRIPT action=>postscript_apply
   | Mulop _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ Mulop action=>prescript_apply
@@ -329,7 +329,7 @@ Mulop ::=
 
 Arrow ::=
   ARROW
-  | Arrow _ SUPOP action=>postscript_apply
+  | Arrow _ Supop action=>postscript_apply
   | Arrow _ POSTSUPERSCRIPT action=>postscript_apply
   | Arrow _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ Arrow action=>prescript_apply
@@ -343,7 +343,7 @@ Prefix ::=
   | MODIFIEROP #TODO: Think this through, maybe lex change
   | LIMITOP
   | OPERATOR
-  | Prefix _ SUPOP action=>postscript_apply
+  | Prefix _ Supop action=>postscript_apply
   | Prefix _ POSTSUPERSCRIPT action=>postscript_apply
   | Prefix _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ Prefix action=>prescript_apply
@@ -352,7 +352,7 @@ Prefix ::=
 Postfix ::=
   POSTFIX
   | FACTORIAL # TODO: Look into postfix lexing
-  | Postfix _ SUPOP action=>postscript_apply
+  | Postfix _ Supop action=>postscript_apply
   | Postfix _ POSTSUPERSCRIPT action=>postscript_apply
   | Postfix _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ Postfix action=>prescript_apply
@@ -362,13 +362,15 @@ Bigop ::=
   BIGOP
   | SUMOP
   | INTOP
-  | Bigop _ SUPOP action=>postscript_apply
+  | Bigop _ Supop action=>postscript_apply
   | Bigop _ POSTSUPERSCRIPT action=>postscript_apply
   | Bigop _ POSTSUBSCRIPT action=>postscript_apply
   | FLOATSUPERSCRIPT _ Bigop action=>prescript_apply
   | FLOATSUBSCRIPT _ Bigop action=>prescript_apply
 
-#SUPOP ::= SUPOP _ SUPOP => extend_operator
+Supop ::= 
+  SUPOP
+  | Supop _ SUPOP action => extend_operator
 
 # Terminal categories need unicorn lexers for SLIF to compile successfully
 # They will never be lex-able from within SLIF, but we expect LaTeXML to provide them reliably
