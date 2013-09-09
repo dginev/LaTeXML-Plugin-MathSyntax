@@ -4,7 +4,6 @@ use utf8;
 
 use LaTeXML::Util::TestMath;
 
-# Source: http://dlmf.nist.gov/1.2
 my @elementary_algebra_tests = (
 'k \leq n' => '(≤:relation1:leq k:ci n:ci)',
 
@@ -241,4 +240,6 @@ Semantics
 
 );
 
-math_tests(type=>'syntax',log=>__FILE__,tests=>\@elementary_algebra_tests);
+math_tests(type=>'syntax',log=>__FILE__,
+  reference=>'http://dlmf.nist.gov/1.2',
+  tests=>\@elementary_algebra_tests);

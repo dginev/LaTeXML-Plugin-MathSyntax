@@ -62,11 +62,11 @@ sub math_tests {
       my $message = "Weaken Semantics";
       push @$report, {tex=>$input,semantics=>$array_expected,message=>$message} if $options{log};
       fail($message.": $output"); next; }
-    my $xml_parse = parse_TeX($input,parser=>'LaTeXML::MathSyntax');
+    my ($xml_parse,$parse_log) = parse_TeX($input,parser=>'LaTeXML::MathSyntax');
     unless ($xml_parse) {
       my $message = "Parsing TeX";
       push @$report, {tex=>$input,syntax=>$weakened_expected,semantics=>$array_expected,message=>$message} if $options{log};
-      fail($message.": $input"); next; }
+      fail($message.": $input\n$parse_log\n"); next; }
     my $array_parse = xmldom_to_array($xml_parse);
     unless ($xml_parse) {
       my $message = "Convert parse to array";
@@ -95,7 +95,7 @@ sub math_tests {
       push @$report, {tex=>$input,parse=>$array_parse,
         syntax=>$weakened_expected,semantics=>$array_expected,message=>$message}
     }}
-  math_report($options{log},$report) if $options{log};
+  math_report($options{log},$options{reference},$report) if $options{log};
   done_testing();
 }
 
@@ -229,14 +229,32 @@ sub weaken_cmml_to_xmath {
   if ($content_head eq 'csymbol') {
     my $lexeme = delete $attributes{lexeme};
     @body = $lexeme ? ($lexeme) : ();
-    $attributes{meaning} = shift @copy; }
+    $attributes{meaning} = shift @copy;
+  }
   elsif ($content_head eq 'cn') {
     $attributes{meaning} = shift @copy;
     @body = $attributes{meaning}; }
   elsif ($content_head eq 'bvar') {
     # Syntax-land is binder unaware
     return; }
+  elsif ($content_head eq 'bind') {
+    return weaken_cmml_to_xmath($copy[2],$type); }
   else {
+    if (ref $copy[0] eq 'ARRAY') {
+      if ($copy[0]->[0] eq 'csymbol') {
+        my $meaning = $copy[0]->[2];
+        if ($meaning && ($meaning eq 'nthdiff')) {
+          $copy[1]->[0] = 'ci';
+          $copy[1]->[1]->{meaning} = $copy[1]->[2];
+          $copy[1]->[2] = encode('UTF-8', '′' x $copy[1]->[2]);
+          @copy = ($copy[0],$copy[2],$copy[1]);
+      }}
+      elsif ($copy[0]->[0] eq 'apply') {
+        my $bind = $copy[0]->[4];
+        if ($bind && (ref $bind eq 'ARRAY') && ($bind->[0] eq 'bind')) {
+          return weaken_cmml_to_xmath($copy[0],$type);
+        }}
+    }
     @body = grep {defined} map {weaken_cmml_to_xmath($_,$type)} @copy; }
   
   my $meaning = $attributes{meaning};
@@ -372,8 +390,7 @@ sub parse_TeX {
   $latexml->prepare_session($opts);
   # Digest and convert to LaTeXML's XML
   my $response = $latexml->convert($tex_math);
-  my $xmath = $response->{result};
-  return $xmath;
+  return ($response->{result},$response->{log});
 }
 
 1;

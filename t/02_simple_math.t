@@ -22,4 +22,6 @@ my @simple_math_tests = (
 Semantics
 );
 
-math_tests(type=>'syntax',log=>__FILE__,tests=>\@simple_math_tests);
+math_tests(type=>'syntax',log=>__FILE__,
+    reference=>'https://github.com/dginev/LaTeXML-Plugin-MathSyntax',
+    tests=>\@simple_math_tests);
