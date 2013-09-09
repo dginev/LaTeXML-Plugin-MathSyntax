@@ -33,7 +33,7 @@ our @EXPORT = qw/math_report/;
 our $converter = LaTeXML::Converter->get_converter(
   LaTeXML::Util::Config->new(profile=>'math',math_formats=>['pmml']));
 sub math_report {
-  my ($file,$entries) = @_;
+  my ($file,$reference,$entries) = @_;
   my $report = <<"HEAD";
 <!DOCTYPE html>
 <html>
@@ -59,6 +59,7 @@ sub math_report {
   </style>
 </head>
 <body>
+<h1><a href='$reference'>Source Document for Dataset</a></h1>
 <table>
   <tr>
     <th>Display</th>
@@ -171,6 +172,7 @@ sub add_edges {
     my $e = $graph->add_edge($head,$child);
     my $child_width = add_edges($graph,$subtree);
     my $offset_string;
+    $first = 0 if ($first && ($child->get_attribute('color') eq element_to_color('apply')));
     if ($first) {
       $first = 0;
       # Applied/bound elements should be treated as symbols
