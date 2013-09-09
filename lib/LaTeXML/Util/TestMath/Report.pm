@@ -44,14 +44,17 @@ sub math_report {
    table {width: 100%}
    th {text-align:left}
    tr td {
-    border-bottom:1pt solid black;
+    border-bottom:1pt dashed black;
+    border-right:1pt dashed black;
     valign: middle;
     vertical-align:middle;
    }
    tr th {
-    border-bottom:1pt solid black;
+    border-bottom:1pt dashed black;
+    border-right:1pt dashed black;
     background-color:#FFFFC9;
-    border-right:solid black;
+    valign: middle;
+    vertical-align:middle;
    }
   </style>
 </head>
@@ -173,13 +176,13 @@ sub add_edges {
       # Applied/bound elements should be treated as symbols
       $child->set_attribute('color',element_to_color('csymbol'));
       #$e->set_attribute('start','top,0');
-      $max_width += $child_width;
       $e->set_attribute('start','east');
       $e->set_attribute('end','west');
-      $offset_string = "2,0"; }
+      $offset_string = "$max_width,0"; 
+      $max_width += $child_width; }
     else {
-      $offset_string = "$offset,4";
-      $e->set_attribute('start','south,0');
+      $offset_string = "$offset,3";
+      $e->set_attribute('start','south,1');
       $e->set_attribute('end','north,0');
       $offset += $child_width; }
     $child->set_attribute('offset',$offset_string);
