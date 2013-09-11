@@ -216,9 +216,21 @@ sub mark_use {
       Marpa::R2::Context::bail('PRUNE') if (($value eq 'function') && ($lex =~ /^\d+$/) && ($lex ne '1'));
       $state->{atoms}->{$lex} = $value;
     }
+  } else {
+    # If f+g is a function, then f and g are functions
+    my $op = $t2->[2];
+    my $arg1 = $t2->[3];
+    my $arg2 = $t2->[4];
+    if (blessed($op) && $arg1 && $arg2) {
+      my $meaning = $op->getAttribute('meaning');
+      # TODO: Think this through, when to do we assume compositionality?
+      if ($meaning && ($meaning =~ /^plus|minus|times|divide$/)) {
+        $state->mark_use($arg1,$value);
+        $state->mark_use($arg2,$value);
+      }
+    }
   }
-  1;
-}
+  1; }
 
 1;
 
