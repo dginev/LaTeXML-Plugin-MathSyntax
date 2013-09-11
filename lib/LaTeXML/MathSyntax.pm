@@ -61,7 +61,12 @@ FactorArgument ::=
 # I.2 Factor compounds
 Factor ::=
   FactorArgument
-  # I.2.0. Infix Concatenation - Left and Right
+  # I.2.1. Infix Operator - Factors
+  | Factor _ Mulop _ FactorArgument  action => infix_apply_factor
+  # I.2.2  Postfix operator - factors
+  | FactorArgument _ Postfix  action => postfix_apply_factor
+
+  # I.2.3. Infix Concatenation - Left and Right
   | FactorArgument _ Factor  action => concat_apply_right
   | Factor _ FactorArgument  action => concat_apply_left
   # The asymetry in the above two rules makes '2a f(x)' ungrammatical
@@ -69,11 +74,6 @@ Factor ::=
   || Factor _ Factor  action => concat_apply_factor
   # But if we are not careful, we will allow too many parses for ' f(x)f(y)'
   # But then again we also need to consider (f \circ g) x 
-
-  # I.2.1. Infix Operator - Factors
-  | Factor _ Mulop _ FactorArgument  action => infix_apply_factor
-  # I.2.2  Postfix operator - factors
-  | FactorArgument _ Postfix  action => postfix_apply_factor
 
 # II. Terms 
 # II.1. TermArguments
@@ -98,7 +98,7 @@ Term ::=
   | BigTerm
   | Term _ Addop _ BigTerm  action => infix_apply_term
   | PreTerm
-  | TermArgument _ Postfix  action => postfix_apply_factor
+  | TermArgument _ Postfix  action => postfix_apply_term
 
 
 # III. Types 
