@@ -16,7 +16,7 @@ use warnings;
 use utf8;
 use feature qw/switch/;
 use Encode;
-use Data::Dump qw(dump);
+use Data::Dumper;
 use Scalar::Util qw/blessed/;
 use HTML::Entities;
 
@@ -122,7 +122,7 @@ sub draw_svg {
   my $graph = Graph::Easy->new();
   add_nodes($graph,$array,0);
   add_edges($graph,$array);
-  $graph->timeout(30);
+  $graph->timeout(300);
   my $drawn = $graph->as_svg();
   $drawn =~ s/\s\d+\^(<\/\w+>)$/$1/mg;
   return $drawn; }
@@ -159,10 +159,12 @@ sub add_nodes {
     $counter = add_nodes($graph,$subtree,$counter); }
   return $counter; }
 
+my $default_width = 10;
+my $default_height = 10;
 sub add_edges {
   my ($graph,$array) = @_;
   my $head = $array->[0];
-  my $max_width = 2;
+  my $max_width = $default_width;
   my $offset = 0;
   my $first = 1;
   foreach my $subtree(@$array[2..scalar(@$array)-1]) {
@@ -183,7 +185,7 @@ sub add_edges {
       $offset_string = "$max_width,0"; 
       $max_width += $child_width; }
     else {
-      $offset_string = "$offset,3";
+      $offset_string = "$offset,$default_height";
       $e->set_attribute('start','south,1');
       $e->set_attribute('end','north,0');
       $offset += $child_width; }
