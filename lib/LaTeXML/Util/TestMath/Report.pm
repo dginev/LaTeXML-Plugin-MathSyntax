@@ -14,7 +14,7 @@ package LaTeXML::Util::TestMath;
 use strict;
 use warnings;
 use utf8;
-use feature 'switch';
+use feature qw/switch/;
 use Encode;
 use Data::Dump qw(dump);
 use Scalar::Util qw/blessed/;
@@ -209,10 +209,10 @@ sub log_drawing_clear {
 
 sub element_to_color {
   given (shift) {
-    when (undef) {'black'}
-    when (/^apply|XMApp$/) {'orange'}
-    when (/^XMTok|cn|ci$/) {'black'}
-    when (/^bind|bvar$/) {'red'}
-    when (/^csymbol$/) {'blue'}
-    default {'black'}
+    when (undef) {return 'black'}
+    when (/^apply|XMApp$/) {return 'orange'}
+    when (/^XMTok|cn|ci$/) {return 'black'}
+    when (/^bind|bvar$/) {return 'red'}
+    when (/^csymbol$/) {return 'blue'}
+    default {return 'black'}
   };}

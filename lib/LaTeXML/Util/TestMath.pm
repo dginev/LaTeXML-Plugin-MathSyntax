@@ -45,10 +45,10 @@ our @EXPORT = (qw(math_tests anno_string_to_array weaken_cmml parse_TeX),
 
 sub math_tests {
   my (%options) = @_;
+  $ENV{MATH_PARSER} = 'LaTeXML::MathSyntax' unless defined $ENV{MATH_PARSER};
   $options{tests} = [] unless defined $options{tests};
   my $iterator = natatime 2, @{$options{tests}};
   my $report = [];
-
   while (my ($input,$output) = $iterator->()) {
     my $copy = $input;
     my ($array_expected,$grammar_report) = anno_string_to_array($output);
@@ -62,7 +62,7 @@ sub math_tests {
       my $message = "Weaken Semantics";
       push @$report, {tex=>$input,semantics=>$array_expected,message=>$message} if $options{log};
       fail($message.": $output"); next; }
-    my ($xml_parse,$parse_log) = parse_TeX($input,parser=>'LaTeXML::MathSyntax');
+    my ($xml_parse,$parse_log) = parse_TeX($input,parser=>$ENV{MATH_PARSER});
     unless ($xml_parse) {
       my $message = "Parsing TeX";
       push @$report, {tex=>$input,syntax=>$weakened_expected,semantics=>$array_expected,message=>$message} if $options{log};
@@ -94,7 +94,8 @@ sub math_tests {
         $message = "Syntax tree match (".scalar(@parse_forest)." parse$s)"; }
       push @$report, {tex=>$input,parse=>$array_parse,
         syntax=>$weakened_expected,semantics=>$array_expected,message=>$message}
-    }}
+    }
+  }
   math_report($options{log},$options{reference},$report) if $options{log};
   done_testing();
 }
@@ -179,14 +180,6 @@ RawTerm ::=
   || Word ':' Word action => basic_symbol
   # Special case where the lexeme is a special char :()
   || ':' ':' Word ':' Word action => csymbol
-  # These guys create confusion, we're getting parses for some blatant typos
-  # |  '^' ':' Word ':' Word action => csymbol
-  # |  '[' ':' Word ':' Word action => csymbol
-  # |  ']' ':' Word ':' Word action => csymbol
-  # |  '{' ':' Word ':' Word action => csymbol
-  # |  '}' ':' Word ':' Word action => csymbol
-  # |  '(' ':' Word ':' Word action => csymbol
-  # |  ')' ':' Word ':' Word action => csymbol
   || ':' Word ':' Word action => nolex_csymbol
 
 Word ~ [^\s\:\(\)\[\]\{\}\^]+
@@ -389,8 +382,7 @@ sub parse_TeX {
   my $latexml = LaTeXML::Converter->get_converter($opts);
   $latexml->prepare_session($opts);
   # Digest and convert to LaTeXML's XML
-  my $response = $latexml->convert($tex_math);
-  return ($response->{result},$response->{log});
-}
+  my $response = $latexml->convert($tex_math); 
+  return ($response->{result},$response->{log}); }
 
 1;
