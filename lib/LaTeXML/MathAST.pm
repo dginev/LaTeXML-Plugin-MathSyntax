@@ -138,9 +138,19 @@ sub extend_operator {
 
 sub prefix_apply {
   my ( $state, $op, $c, $t,$type) = @_;
-  my $app = ApplyNary(MaybeLookup($op),$t); 
+  $op = MaybeLookup($op);
+  # TODO: specialized rewrite rule, move to an arith semantics CD
+  if (($type eq 'term') && blessed($op) && ($op->getAttribute('meaning') eq 'minus')) {
+    if (blessed($t) && ($t->getAttribute('role') eq 'NUMBER')) {
+      my $number = $t->getAttribute('meaning');
+      if ($number =~ /^\d/) {
+        $t->removeChildNodes;
+        $t->appendText("-$number");
+        return $t; }}}
+
+  my $app = ApplyNary($op,$t); 
   $app->[1]->{'cat'}=$type; 
-  $app;}
+  return $app;}
 sub prefix_apply_factor { prefix_apply(@_,'factor'); }
 sub prefix_apply_term { prefix_apply(@_,'term'); }
 sub prefix_apply_relation { prefix_apply(@_,'relation'); }
