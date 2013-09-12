@@ -90,8 +90,20 @@ HEAD
 
     # 2. Input Parse Forest -> SVG
     $progressString = log_drawing(++$counter,$total, $progressString);
-    my $graphed_parse = draw_svg($parse);
-    $report .= "<td>$graphed_parse</td>";
+    # Top-level disjunctions should be drawn separately (visually more accessible)
+    my @parses;
+    my $op = $parse->[2];
+    my $opmeaning = $op->[1]->{meaning} if ref $op;
+    if ($opmeaning && ($opmeaning eq 'cdlf-set')) {
+      @parses = (@$parse[3..scalar(@$parse)-1]); }
+    else {
+      @parses = ($parse); }
+    my @graphed_parses = map {draw_svg($_)} @parses;
+    if (scalar(@graphed_parses) == 1) {
+      $report .= "<td>".$graphed_parses[0]."</td>"; }
+    else {
+      #TODO: Multiple parses
+      $report .= "<td>".$graphed_parses[0]."</td>"; }
     # 3. Expected Syntax Tree -> SVG
     $progressString = log_drawing(++$counter,$total, $progressString);
     my $graphed_syntax = draw_svg($expected_syntax);
@@ -138,7 +150,7 @@ sub add_nodes {
   foreach my $subtree(@$array[2..scalar(@$array)-1]) {
     next if ref $subtree;
     $value .= decode('UTF-8',$subtree);  }
-  $label.=":$value" if $value;
+  $label.=":$value" if length($value)>0;
   #$label.="\\r";
   $label .= " $counter^";
   #$label .= "\x{2062}" x $counter;
