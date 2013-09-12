@@ -80,7 +80,7 @@ sub math_tests {
     if ($array_parse && ($array_parse->[0] eq 'ltx:XMApp') && 
       (defined $array_parse->[1]->{meaning}) &&
       ($array_parse->[1]->{meaning} eq 'cdlf-set')) {
-      @parse_forest = @$array_parse[2..scalar(@$array_parse)-1];
+      @parse_forest = @$array_parse[3..scalar(@$array_parse)-1];
     } else {
       @parse_forest = ($array_parse); }
     # TODO: Figure out how to neatly test both syntax and semantics
@@ -208,7 +208,7 @@ sub weaken_cmml {
   return weaken_cmml_to_xmath($cmml_array,$type); }
 
 our $xmath_name = {'apply'=>'ltx:XMApp','cn'=>'ltx:XMTok','ci'=>'ltx:XMTok','csymbol'=>'ltx:XMTok'};
-our $xmath_meaning = {'eq'=>'equals'};
+our $xmath_meaning = {'eq'=>'equals','unary_minus'=>'minus'};
 sub weaken_cmml_to_xmath {
   my ($array,$type) = @_;
   # For now, simple renaming would do:
