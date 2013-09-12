@@ -36,7 +36,7 @@ Semantics
 #       (:combinat1:binomial n:ci 2:cn)
 #       (:arith1:power a:ci (-:arith1:minus n:ci 2:cn))
 #       (:arith1:power b:ci 2:ci ))
-#     :underspecified:ellipsis
+#     …:underspecified:ellipsis
 #     (:arith1:times
 #       (:combinat1:binomial n:ci (-:arith1:minus n:ci 1:cn))
 #       a:ci
@@ -51,7 +51,7 @@ Semantics
   (+:arith1:plus
     (:combinat1:binomial n:ci 0:cn)
     (:combinat1:binomial n:ci 1:cn)
-    :underspecified:ellipsis
+    …:underspecified:ellipsis
     (:combinat1:binomial n:ci n:ci))
   (:arith1:power 2:cn n:ci))
 
@@ -61,9 +61,10 @@ Semantics
 
 (=:relation1:eq
   (+:arith1:plus
-    (:combinat1:binomial n:ci 0:cn)
-    (-:arith1:unary_minus (:combinat1:binomial n:ci 1:cn))
-    :underspecified:ellipsis
+    (-:arith1:minus
+      (:combinat1:binomial n:ci 0:cn)
+      (:combinat1:binomial n:ci 1:cn))
+    …:underspecified:ellipsis
     (:arith1:times
       (:arith1:power -1:cn n:ci)
       (:combinat1:binomial n:ci n:ci)))
@@ -78,7 +79,7 @@ Semantics
     (:combinat1:binomial n:ci 0:cn)
     (:combinat1:binomial n:ci 2:cn)
     (:combinat1:binomial n:ci 4:cn)
-    :underspecified:ellipsis
+    …:underspecified:ellipsis
     (:combinat1:binomial n:ci ℓ:ci))
   (:arith1:power 2:cn (-:arith1:minus n:ci -1:cn)))
 
@@ -94,7 +95,7 @@ Semantics
     (:arith1:times
       n:ci
       (-:arith1:minus n:ci 1:cn)
-      :underspecified:ellipsis
+      …:underspecified:ellipsis
       (+:arith1:plus n:ci (-:arith1:unary_minus k:ci) 1:cn))
     (!:integer1:factorial k:ci))
   (:arith1:divide
@@ -136,7 +137,7 @@ Semantics
 #   (+:arith1:plus
 #     (:combinat1:binomial n:ci 0:cn)
 #     (-:arith1:unary_minus (:combinat1:binomial n:ci 1:cn))
-#     :underspecified:ellipsis
+#     …:underspecified:ellipsis
 #     (:arith1:times
 #       (:arith1:power -1:cn m:ci)
 #       (:combinat1:binomial n:ci m:ci)))
@@ -178,7 +179,7 @@ Semantics
     a:ci
     (:arith1:times a:ci x:ci)
     (:arith1:times a:ci (:arith1:power x:ci 2:cn))
-    :underspecified:ellipsis
+    …:underspecified:ellipsis
     (:arith1:times a:ci (:arith1:power x:ci (-:arith1:minus n:ci 1:cn))))
   (:arith1:divide 
     (-:arith1:minus 1:cn (:arith1:power x:ci n:ci))
@@ -195,7 +196,7 @@ Semantics
         a:ci
         (:arith1:times a:ci x:ci)
         (:arith1:times a:ci (:arith1:power x:ci 2:cn))
-        :underspecified:ellipsis
+        …:underspecified:ellipsis
         (:arith1:times a:ci (:arith1:power x:ci (-:arith1:minus n:ci 1:cn))))
       (:arith1:divide 
         (-:arith1:minus 1:cn (:arith1:power x:ci n:ci))
@@ -215,12 +216,12 @@ Semantics
 #     (:arith1:times
 #       (-:arith1:minus x:ci alpha1:ci)
 #       (-:arith1:minus x:ci alpha2:ci)
-#       :underspecified:ellipsis
+#       …:underspecified:ellipsis
 #       (-:arith1:minus x:ci alphan:ci)))
 #   (+:arith1:plus
 #     (:arith1:divide A1:ci (-:arith1:minus x:ci alpha1:ci))
 #     (:arith1:divide A2:ci (-:arith1:minus x:ci alpha2:ci))
-#     :underspecified:ellipsis
+#     …:underspecified:ellipsis
 #     (:arith1:divide An:ci (-:arith1:minus x:ci alphan:ci))))
 
 # # Semantics
