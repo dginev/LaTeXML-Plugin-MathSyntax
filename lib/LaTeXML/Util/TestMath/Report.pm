@@ -89,7 +89,6 @@ HEAD
     $report .= "<td style='vertical-align:middle; font-size: 300%; $math_color'>$mathml</td>";
 
     # 2. Input Parse Forest -> SVG
-    $progressString = log_drawing(++$counter,$total, $progressString);
     # Top-level disjunctions should be drawn separately (visually more accessible)
     my @parses;
     my $op = $parse->[2];
@@ -98,12 +97,15 @@ HEAD
       @parses = (@$parse[3..scalar(@$parse)-1]); }
     else {
       @parses = ($parse); }
+    $progressString = log_drawing(++$counter,$total, $progressString);
     my @graphed_parses = map {draw_svg($_)} @parses;
     if (scalar(@graphed_parses) == 1) {
       $report .= "<td>".$graphed_parses[0]."</td>"; }
     else {
       #TODO: Multiple parses
-      $report .= "<td>".$graphed_parses[0]."</td>"; }
+      $report .= "<td>";
+      $report .= "$_<br></br>" foreach (@graphed_parses);
+      $report .= "</td>"; }
     # 3. Expected Syntax Tree -> SVG
     $progressString = log_drawing(++$counter,$total, $progressString);
     my $graphed_syntax = draw_svg($expected_syntax);
@@ -129,7 +131,7 @@ HEAD
 
 sub draw_svg {
   my $array = shift;
-  return "Failed." unless $array;
+  return "Failed." unless $array && ((ref $array) eq 'ARRAY') && @$array;
   #print STDERR dump($array);
   my $graph = Graph::Easy->new();
   add_nodes($graph,$array,0);
