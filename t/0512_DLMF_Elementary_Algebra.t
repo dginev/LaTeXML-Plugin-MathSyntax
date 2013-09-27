@@ -57,7 +57,7 @@ Semantics
 
 Semantics
 
-'\binom{n}{0}-\binom{n}{1}+\dots+(-1)^{n}\binom{n}{n}=0.' => <<'Semantics',
+'\binom{n}{0}-\binom{n}{1}+\dots+(-1)^{n}\binom{n}{n}=0' => <<'Semantics',
 
 (=:relation1:eq
   (+:arith1:plus
@@ -81,7 +81,7 @@ Semantics
     (:combinat1:binomial n:ci 4:cn)
     …:underspecified:ellipsis
     (:combinat1:binomial n:ci ℓ:ci))
-  (:arith1:power 2:cn (-:arith1:minus n:ci -1:cn)))
+  (:arith1:power 2:cn (-:arith1:minus n:ci 1:cn)))
 
 Semantics
 
@@ -95,8 +95,8 @@ Semantics
     (:arith1:times
       n:ci
       (-:arith1:minus n:ci 1:cn)
-      …:underspecified:ellipsis
-      (+:arith1:plus n:ci (-:arith1:unary_minus k:ci) 1:cn))
+      ⋯:underspecified:ellipsis
+      (+:arith1:plus (-:arith1:minus n:ci k:ci) 1:cn))
     (!:integer1:factorial k:ci))
   (:arith1:divide
     (:arith1:times
@@ -105,7 +105,7 @@ Semantics
     (!:integer1:factorial k:ci))
   (:arith1:times
     (:arith1:power -1:cn k:ci)
-    (:combinat1:binomial (+:arith1:plus k:ci (-:arith1:unary_minus n:ci) -1:cn) k:ci)))
+    (:combinat1:binomial (+:arith1:plus (-:arith1:minus k:ci n:ci) -1:cn) k:ci)))
 Semantics
 
 '\binom{n+1}{k}=\binom{n}{k}+\binom{n}{k-1}.' => <<'Semantics',
