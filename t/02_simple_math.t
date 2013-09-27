@@ -30,6 +30,18 @@ Semantics
 
 (:arith1:times a:ci b:ci c:ci d:ci )
 Semantics
+
+'f(x)g(x)' => <<'Semantics',
+(:arith1:times 
+  (f:ci x:ci)
+  (g:ci x:ci))
+Semantics
+#TODO: Figure out \circ's Content MathML
+'(f \circ g) x' => <<'Semantics',
+((∘:arith1:compose f:ci g:ci) 
+  x:ci)
+Semantics
+
 );
 
 math_tests(type=>'syntax',log=>__FILE__,
