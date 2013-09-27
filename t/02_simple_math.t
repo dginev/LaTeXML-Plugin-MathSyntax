@@ -20,6 +20,16 @@ my @simple_math_tests = (
    (:arith1:times 2:cn a:ci b:ci)
    (:arith1:power b:ci 2:cn)))
 Semantics
+
+'abc' => <<'Semantics',
+
+(:arith1:times a:ci b:ci c:ci )
+Semantics
+
+'abcd' => <<'Semantics',
+
+(:arith1:times a:ci b:ci c:ci d:ci )
+Semantics
 );
 
 math_tests(type=>'syntax',log=>__FILE__,
