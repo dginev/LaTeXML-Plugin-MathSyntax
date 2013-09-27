@@ -44,7 +44,7 @@ FactorArgument ::=
   ATOM  action => first_arg_term
   | UNKNOWN  action => first_arg_term
   | NUMBER  action => first_arg_number
-  | ID  action => first_arg_term
+  | ID  action => first_arg_id
   | VERTBAR _ Term _ VERTBAR  action => fenced
   | Prefix _ FactorArgument  action => prefix_apply_factor
   | OPEN _ CLOSE  action => fenced_empty
@@ -61,19 +61,34 @@ FactorArgument ::=
 # I.2 Factor compounds
 Factor ::=
   FactorArgument
+  | FunFactor
+  | MulFactor
+  | PostFactor
+
+MulFactor ::=
   # I.2.1. Infix Operator - Factors
-  | Factor _ Mulop _ FactorArgument  action => infix_apply_factor
-  # I.2.2  Postfix operator - factors
-  | FactorArgument _ Postfix  action => postfix_apply_factor
+  FactorArgument _ Mulop _ FactorArgument  action => infix_apply_factor
+  | MulFactor _ Mulop _ FactorArgument  action => infix_apply_factor
 
   # I.2.3. Infix Concatenation - Left and Right
-  | FactorArgument _ Factor  action => concat_apply_right
-  | Factor _ FactorArgument  action => concat_apply_left
+  | FactorArgument _ FactorArgument  action => concat_apply_left 
+  | MulFactor _ FactorArgument  action => concat_apply_left 
   # The asymetry in the above two rules makes '2a f(x)' ungrammatical
   # So we add a rule of lesser priority to match compounds:
-  || Factor _ Factor  action => concat_apply_factor
   # But if we are not careful, we will allow too many parses for ' f(x)f(y)'
   # But then again we also need to consider (f \circ g) x 
+  | MulFactor _ PostFactor  action => concat_apply_factor 
+
+PostFactor ::=
+  # I.2.2  Postfix operator - factors
+  FactorArgument _ Postfix  action => postfix_apply_factor
+
+# You can't multiply on the right side of a fun factor, unless you're using another FunFactor
+# TODO: Is that really dead wrong? Probably!!!
+FunFactor ::=
+  FactorArgument _ FactorArgument  action => concat_apply_right assoc=>right
+  | FactorArgument _ FunFactor action => concat_apply_right assoc=>right
+  || Factor _ FunFactor  action => concat_apply_factor assoc=>right
 
 # II. Terms 
 # II.1. TermArguments
@@ -465,26 +480,19 @@ sub parse {
   my @values = ();
   $$lexref = undef; # Reset this , so that we are consistent with the RecDescent behaviour
   if (!$failed) {
-    my $value_ref;
-    do {
+    my $value_ref=\'init';
+    local $@;
+    while ((defined $value_ref) || $@) {
       $value_ref = undef;
-      eval { local $SIG{__DIE__} = undef; $value_ref = $rec->value(); 1; };
-      print STDERR "$@\n" if ($LaTeXML::MathSyntax::DEBUG);
+      my $eval_return = eval { local $SIG{__DIE__}; $value_ref = $rec->value(); 1; };
+      next if ($@ || (!$eval_return));
       push @values, ${$value_ref} if (defined $value_ref);
-      if ($@ =~ /PRUNE$/) {
-        undef $@; $value_ref=[];
-      }
-    } while ((!$@) && (defined $value_ref));
-    if ($@) {
-      # Was left Incomplete??
-      $$lexref = join(' ',grep($_ ne '_::', @unparsed));
-    }
-  } else {
-    # Can't recognize it...print out the issue:
-    $$lexref = join(' ',grep($_ ne '_::', @unparsed));
+    } 
   }
+  if (!@values) { # Incomplete / no parse
+    $$lexref = join(' ',grep($_ ne '_::', @unparsed)); }
   my $result = LaTeXML::MathAST::final_AST(\@values);
-  if ($self->{output} eq 'array') {
+  if ($self->{output} && ($self->{output} eq 'array')) {
     return convert_to_array($result); }
   else {
     return $result; }
