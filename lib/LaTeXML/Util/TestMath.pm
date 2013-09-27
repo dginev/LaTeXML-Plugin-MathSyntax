@@ -38,7 +38,7 @@ binmode Test::More->builder->failure_output, ":utf8";
 
 use LaTeXML::Util::Test;
 our @ISA = qw(Exporter);
-our @EXPORT = (qw(math_tests anno_string_to_array weaken_cmml parse_TeX),
+our @EXPORT = (qw(math_tests anno_string_to_array weaken_cmml parse_TeX_math),
   @Test::More::EXPORT);
 
 ### Test API
@@ -62,11 +62,14 @@ sub math_tests {
       my $message = "Weaken Semantics";
       push @$report, {tex=>$input,semantics=>$array_expected,message=>$message} if $options{log};
       fail($message.": $output"); next; }
-    my ($xml_parse,$parse_log) = parse_TeX($input,parser=>$ENV{MATH_PARSER});
-    unless ($xml_parse) {
+    my ($xml_parse,$parse_log,$parse_status) = parse_TeX_math($input,parser=>$ENV{MATH_PARSER});
+    unless ($xml_parse && ($parse_status<1)) {
       my $message = "Parsing TeX";
       push @$report, {tex=>$input,syntax=>$weakened_expected,semantics=>$array_expected,message=>$message} if $options{log};
-      fail($message.": $input\n$parse_log\n"); next; }
+      $parse_log = join("\n",grep {/^\t/ || /^(Warning|Error|Fatal)\:/} split(/\n/,$parse_log));
+      fail($message.": $input");
+      diag("$parse_log");
+      next; }
     my $array_parse = xmldom_to_array($xml_parse);
     unless ($xml_parse) {
       my $message = "Convert parse to array";
@@ -258,7 +261,7 @@ sub weaken_cmml_to_xmath {
 sub xmldom_to_array {
   my ($tree) = @_;
   my $class = blessed($tree);
-  if ($class && ($class ne 'XML::LibXML::Text')) {
+  if ($class && ($class ne 'XML::LibXML::Text') && ($class ne 'XML::LibXML::Comment')) {
     # XML leaf, turn to array:
     my @attributelist = grep {defined} $tree->attributes();
     my $attributes = {map {$_->localname() => $_->value()} @attributelist};
@@ -359,7 +362,7 @@ sub CMML_Semantics::attach_keyval {
 
 ### Input manipulation
 
-sub parse_TeX {
+sub parse_TeX_math {
   my ($tex_math,%options) = @_;
   $options{parser} //= 'LaTeXML::MathSyntax';
   my $opts = LaTeXML::Util::Config->new(
@@ -367,22 +370,24 @@ sub parse_TeX {
     whatsin=>'math',
     whatsout=>'math',
     post=>0,
-    verbosity=>-2,
+    verbosity=>1,
     mathparse=>$options{parser},
     defaultresources => 0,
     format=>'dom',
     inputencoding=>'UTF-8',
     preload=>[
-      'LaTeX.pool','amsmath.sty',
+      'LaTeX.pool',
+      'article.cls',
+      'amsmath.sty',
       'amsthm.sty',
       'amstext.sty',
       'amssymb.sty',
       'eucal.sty',
-      '[dvipsnames]xcolor.sty',]);
+      '[dvipsnames]xcolor.sty']);
   my $latexml = LaTeXML::Converter->get_converter($opts);
   $latexml->prepare_session($opts);
   # Digest and convert to LaTeXML's XML
   my $response = $latexml->convert($tex_math); 
-  return ($response->{result},$response->{log}); }
+  return ($response->{result},$response->{log},$response->{status_code}); }
 
 1;
