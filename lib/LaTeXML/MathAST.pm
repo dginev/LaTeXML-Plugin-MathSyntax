@@ -113,6 +113,7 @@ sub concat_apply_left {
 # Semantics: FA always function
 sub concat_apply_right {
   my ( $state, $t1, $c, $t2) = @_;  
+
   # if t1 is an atom - mark as function or fail if inconsistent
   $state->mark_use($t1,'function');
   # Just in case, do the same for $t2, which is a scalar if atom:
@@ -208,10 +209,10 @@ sub postfix_apply_formula {
 # V. Scripts
 sub postscript_apply {
   my ( $state, $base, $c, $script) = @_;
-  NewScript(MaybeLookup($base),MaybeLookup($script)); }
+  DecorateOperator(MaybeLookup($base),MaybeLookup($script)); }
 sub prescript_apply {
   my ( $state, $script, $c, $base) = @_;
-  NewScript(MaybeLookup($base),MaybeLookup($script)); }
+  DecorateOperator(MaybeLookup($base),MaybeLookup($script)); }
 
 # VI. Transfix:
 sub set {
@@ -259,6 +260,7 @@ sub mark_use {
   my ($state,$token,$value) = @_;
   return unless $token;
   my $class = blessed($token);
+  my $ref = ref $token;
   if ($class && ($class eq 'XML::LibXML::Element')) {
     my $role = $token->getAttribute('role');
     my $lex = $token->textContent;
@@ -271,12 +273,18 @@ sub mark_use {
           # Don't allow numbers as functions, unless 1(x)
           (($lex =~ /^\d+$/) && ($lex ne '1'))
           # Don't allow IDs as functions either
-          || ($role eq 'ID')
+          || ($role eq 'ID') || ($role eq 'NUMBER')
         ));
       $state->{atoms}->{$lex} = $value;
     }
   }
-  # else {
+  elsif ($ref && ($ref eq 'ARRAY')) {
+    # If array, still make sure we prune away known roles
+    my $role = $token->[1] && ((ref $token->[1]) eq 'HASH') && $token->[1]->{role};
+    Marpa::R2::Context::bail('PRUNE') if ($role && ($value eq 'function') && (
+      ($role eq 'ID') || ($role eq 'NUMBER')
+    ));
+  }
   #   # If f+g is a function, then f and g are functions
   #   my $op = $token->[2];
   #   my $arg1 = $token->[3];
