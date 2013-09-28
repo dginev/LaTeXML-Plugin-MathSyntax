@@ -25,6 +25,7 @@ our $VERSION = qv("v0.2"); # shorthand
 
 use Marpa::R2;
 use LaTeXML::MathAST;
+use LaTeXML::Global;
 
 our $parses = 0;
 our $RULES = \(<<'END_OF_RULES');
@@ -234,7 +235,8 @@ RelativeFormulaArgument ::=
 # XII. Sequence structures
 # XII.1. Vectors:
 
-Entry ::= Term
+Entry ::= 
+  Term
   | FactorArgument _ Relop _ Term  action => infix_apply_entry
   # a := (1<3) should be grammatical
   | FactorArgument _ Relop _ FormulaArgument  action => infix_apply_entry
@@ -478,6 +480,7 @@ sub parse {
   }
 
   my @values = ();
+  my $saved_report;
   $$lexref = undef; # Reset this , so that we are consistent with the RecDescent behaviour
   if (!$failed) {
     my $value_ref=\'init';
@@ -485,11 +488,15 @@ sub parse {
     while ((defined $value_ref) || $@) {
       $value_ref = undef;
       my $eval_return = eval { local $SIG{__DIE__}; $value_ref = $rec->value(); 1; };
-      next if ($@ || (!$eval_return));
+      if ($@ || (!$eval_return)) {
+        $saved_report.="$@\n";
+        next ;
+      }
       push @values, ${$value_ref} if (defined $value_ref);
     } 
   }
   if (!@values) { # Incomplete / no parse
+    Warn('not_parsed','Marpa',undef,$saved_report);
     $$lexref = join(' ',grep($_ ne '_::', @unparsed)); }
   my $result = LaTeXML::MathAST::final_AST(\@values);
   if ($self->{output} && ($self->{output} eq 'array')) {
