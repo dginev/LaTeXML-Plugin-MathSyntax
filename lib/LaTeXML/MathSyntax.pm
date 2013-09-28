@@ -63,7 +63,6 @@ Factor ::=
   FactorArgument
   | FunFactor
   | MulFactor
-  | PostFactor
 
 MulFactor ::=
   # I.2.1. Infix Operator - Factors
@@ -77,6 +76,7 @@ MulFactor ::=
   # So we add a rule of lesser priority to match compounds:
   # But if we are not careful, we will allow too many parses for ' f(x)f(y)'
   # But then again we also need to consider (f \circ g) x 
+  | PostFactor
   | MulFactor _ PostFactor  action => concat_apply_factor 
 
 PostFactor ::=
