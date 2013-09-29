@@ -321,9 +321,10 @@ sub canonical_form {
   my $attr = shift @copy;
   # No attributes need match up, as long as the tree corresponds
   my @body = map {canonical_form($_)} @copy;
-  if (($head eq 'ltx:XMApp') && ($body[0]->[1]->{role} eq 'SUBSCRIPTOP') && 
+  if (($head eq 'ltx:XMApp') && 
+    ($body[0]->[1]->{role}) && ($body[0]->[1]->{role} eq 'SUBSCRIPTOP') && 
     ($body[1]->[0] eq 'ltx:XMApp') &&
-    ($body[1]->[2]->[1]->{role} eq 'SUPERSCRIPTOP')) {
+    $body[1]->[2]->[1]->{role} && (($body[1]->[2]->[1]->{role} eq 'SUPERSCRIPTOP'))) {
     # rotate the scripts
     my $super = $body[1]; 
     my $base = $super->[3];
