@@ -38,7 +38,7 @@ binmode Test::More->builder->failure_output, ":utf8";
 
 use LaTeXML::Util::Test;
 our @ISA = qw(Exporter);
-our @EXPORT = (qw(math_tests anno_string_to_array weaken_cmml parse_TeX_math),
+our @EXPORT = (qw(math_tests anno_string_to_array weaken_cmml parse_TeX_math canonical_form),
   @Test::More::EXPORT);
 
 ### Test API
@@ -78,8 +78,10 @@ sub math_tests {
     # Unwrap the leading math/xmath if present
     while ($array_parse && ($array_parse->[0] =~ /^ltx:X?Math$/)) {
       $array_parse = $array_parse->[2]; }
-    my @parse_forest = ();
+    # Obtain canonical form of the parse
+    $array_parse = canonical_form($array_parse);
     # If we're given a parse forest, deal with it appropriately
+    my @parse_forest = ();
     if ($array_parse && ($array_parse->[0] eq 'ltx:XMApp') && 
       (defined $array_parse->[1]->{meaning}) &&
       ($array_parse->[1]->{meaning} eq 'cdlf-set')) {
@@ -225,8 +227,7 @@ sub weaken_cmml_to_xmath {
   if ($content_head eq 'csymbol') {
     my $lexeme = delete $attributes{lexeme};
     @body = $lexeme ? ($lexeme) : ();
-    $attributes{meaning} = shift @copy;
-  }
+    $attributes{meaning} = shift @copy; }
   elsif ($content_head eq 'cn') {
     $attributes{meaning} = shift @copy;
     @body = $attributes{meaning}; }
@@ -235,16 +236,35 @@ sub weaken_cmml_to_xmath {
     return; }
   elsif ($content_head eq 'bind') {
     return weaken_cmml_to_xmath($copy[2],$type); }
-  else {
+  else { # Apply case
     if (ref $copy[0] eq 'ARRAY') {
       if ($copy[0]->[0] eq 'csymbol') {
         my $meaning = $copy[0]->[2];
-        if ($meaning && ($meaning eq 'nthdiff')) {
-          $copy[1]->[0] = 'ci';
-          $copy[1]->[1]->{meaning} = $copy[1]->[2];
-          $copy[1]->[2] = encode('UTF-8', '′' x $copy[1]->[2]);
-          @copy = ($copy[0],$copy[2],$copy[1]);
-      }}
+        if ($meaning) {
+          if ($meaning eq 'nthdiff') {
+            $copy[1]->[0] = 'ci';
+            $copy[1]->[1]->{meaning} = $copy[1]->[2];
+            $copy[1]->[2] = encode('UTF-8', '′' x $copy[1]->[2]);
+            @copy = ($copy[0],$copy[2],$copy[1]); }
+          elsif (($meaning eq 'sum') || ($meaning eq 'product')) {
+            my $sum = $copy[0];
+            my $interval = $copy[1];
+            my $summand = $copy[2];
+            # Rewrite the tree to have sub and super scripts
+            # Notation: Grab the bound variable if we're dealing with product or sum
+            #           since we have \sum_{bvar=from}^{to}
+            my $bvar = $summand->[3]->[2]; # bind/bvar
+            my $from = $interval->[3];
+            my $to = $interval->[4];
+            my $narrative_sum = $sum;
+            if ($from) {
+              my $from_clause = ['apply',{},['csymbol',{cd=>'relation1',lexeme=>'='},'eq'],$bvar,$from];
+              $narrative_sum = ['apply',{},['csymbol',{cd=>'interval'},'from'],$sum,$from_clause]; }
+            $narrative_sum = $to ? ['apply',{},['csymbol',{cd=>'interval'},'to'],$narrative_sum,$to] : $narrative_sum;
+            @copy = ($narrative_sum,$summand);
+          }
+        }
+      }
       elsif ($copy[0]->[0] eq 'apply') {
         my $bind = $copy[0]->[4];
         if ($bind && (ref $bind eq 'ARRAY') && ($bind->[0] eq 'bind')) {
@@ -287,12 +307,31 @@ sub syntactic_skeleton {
   my @copy = @$array_ref;
   my $head = shift @copy;
   my $attr = shift @copy;
-  # OMCD and Meaning need to match up _ONLY_
+  # No attributes need match up, as long as the tree corresponds
   my @body = map {syntactic_skeleton($_)} @copy;
   if ($attr->{meaning} && ($attr->{meaning} eq 'times')) {
     @body = grep {(ref $_) || ($_ ne $inv_times)} @body; }
   [$head,{},@body]; }
 
+sub canonical_form {
+  my ($array_ref) = @_;
+  return $array_ref unless (ref $array_ref eq 'ARRAY');
+  my @copy = @$array_ref;
+  my $head = shift @copy;
+  my $attr = shift @copy;
+  # No attributes need match up, as long as the tree corresponds
+  my @body = map {canonical_form($_)} @copy;
+  if (($head eq 'ltx:XMApp') && ($body[0]->[1]->{role} eq 'SUBSCRIPTOP') && 
+    ($body[1]->[0] eq 'ltx:XMApp') &&
+    ($body[1]->[2]->[1]->{role} eq 'SUPERSCRIPTOP')) {
+    # rotate the scripts
+    my $super = $body[1]; 
+    my $base = $super->[3];
+    my $sub = [$head,$attr,$body[0],$base,$body[2]];
+    $super->[3] = $sub;
+    return $super;
+  }
+  [$head,$attr,@body]; }
 
 
 ### Semantics
