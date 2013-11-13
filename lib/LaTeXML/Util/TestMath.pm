@@ -427,7 +427,7 @@ sub parse_TeX_math {
   my $latexml = LaTeXML::Converter->get_converter($opts);
   $latexml->prepare_session($opts);
   # Digest and convert to LaTeXML's XML
-  my $response = $latexml->convert($tex_math); 
+  my $response = $latexml->convert("literal:$tex_math"); 
   return ($response->{result},$response->{log},$response->{status_code}); }
 
 1;
