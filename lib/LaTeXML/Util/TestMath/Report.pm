@@ -30,8 +30,10 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw/math_report/;
 
 # Returns an HTML report of the testing process
-our $converter = LaTeXML::Converter->get_converter(
-  LaTeXML::Util::Config->new(profile=>'math',math_formats=>['pmml']));
+our $config = LaTeXML::Util::Config->new(profile=>'math',math_formats=>['pmml']);
+our $converter = LaTeXML::Converter->get_converter($config);
+$converter->prepare_session($config);
+
 sub math_report {
   my ($file,$reference,$entries) = @_;
   my $report = <<"HEAD";
@@ -61,13 +63,21 @@ sub math_report {
 <body>
 <h1><a href='$reference'>Source Document for Dataset</a></h1>
 <table>
-  <tr>
+  <colgroup>
+     <col span="1" style="width: 10%;"></col>
+     <col span="1" style="width: 30%;"></col>
+     <col span="1" style="width: 25%;"></col>
+     <col span="1" style="width: 25%;"></col>
+     <col span="1" style="width: 10%;"></col>
+  </colgroup>
+  <thead><tr>
     <th>Display</th>
     <th>Parsing Result</th>
     <th>Expected Syntax</th>
     <th>Expected Semantics</th>
     <th>Log Message</th>
-  </tr>
+  </tr></thead>
+  <tbody><tr>
 HEAD
   my $counter = 0;
   my $total = 3 * scalar(@$entries);
@@ -81,7 +91,7 @@ HEAD
     ($tex,$message) = map {s/\n/<br><\/br>\n/g; $_;} map {encode_entities($_)} ($tex,$message);
     $report.='<tr>';
     # 1. TeX -> Pres MathML
-    my $response = $converter->convert($tex);
+    my $response = $converter->convert("literal:$tex");
     my $mathml;
     $mathml = $response->{result} || $tex;
     my $math_color = '';
@@ -118,7 +128,7 @@ HEAD
     $report .= "<td style='vertical-align:middle;'>$message</td>";
     $report.='</tr>';
   }
-  $report .= '</table></body></html>';
+  $report .= '</tbody></table></body></html>';
   $file =~ s/\.t$//;
   $file.='.html'; # Always a new file
   open my $fh ,'>', $file;
