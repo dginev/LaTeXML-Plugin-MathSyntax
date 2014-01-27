@@ -184,7 +184,7 @@ sub prefix_apply {
         $t->setAttribute('meaning',"-$number");
         return $t; }}}
 
-  my $app = ApplyNary($op,$t); 
+  my $app = Apply($op,$t);  # TODO: Should be ApplyNary
   $app->[1]->{'cat'}=$type; 
   return $app;}
 sub prefix_apply_factor { prefix_apply(@_,'factor'); }

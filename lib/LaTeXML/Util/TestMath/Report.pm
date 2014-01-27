@@ -20,8 +20,8 @@ use Data::Dumper;
 use Scalar::Util qw/blessed/;
 use HTML::Entities;
 
-use LaTeXML::Converter;
-use LaTeXML::Util::Config;
+use LaTeXML;
+use LaTeXML::Common::Config;
 
 use Graph::Easy;
 
@@ -30,8 +30,8 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw/math_report/;
 
 # Returns an HTML report of the testing process
-our $config = LaTeXML::Util::Config->new(profile=>'math',math_formats=>['pmml']);
-our $converter = LaTeXML::Converter->get_converter($config);
+our $config = LaTeXML::Common::Config->new(profile=>'math',math_formats=>['pmml']);
+our $converter = LaTeXML->get_converter($config);
 $converter->prepare_session($config);
 
 sub math_report {

@@ -20,8 +20,8 @@ use Data::Dumper;
 use List::MoreUtils qw/natatime/;
 use Scalar::Util qw/blessed/;
 
-use LaTeXML::Converter;
-use LaTeXML::Util::Config;
+use LaTeXML;
+use LaTeXML::Common::Config;
 use LaTeXML::Util::TestMath::Report;
 
 use Test::More;
@@ -51,7 +51,7 @@ sub math_tests {
   my $report = [];
   while (my ($input,$output) = $iterator->()) {
     my $copy = $input;
-    my ($array_expected,$grammar_report) = anno_string_to_array($output);
+    my ($array_expected,$grammar_report) = anno_string_to_array(encode('UTF-8',$output));
     unless ($array_expected) {
       $output=~s/\n$//g;
       my $message = "Parse to CMML: $output\n\nGrammar report: $grammar_report\n";
@@ -405,7 +405,7 @@ sub CMML_Semantics::attach_keyval {
 sub parse_TeX_math {
   my ($tex_math,%options) = @_;
   $options{parser} //= 'LaTeXML::MathSyntax';
-  my $opts = LaTeXML::Util::Config->new(
+  my $opts = LaTeXML::Common::Config->new(
     input_limit=>100,
     whatsin=>'math',
     whatsout=>'math',
@@ -424,7 +424,7 @@ sub parse_TeX_math {
       'amssymb.sty',
       'eucal.sty',
       '[dvipsnames]xcolor.sty']);
-  my $latexml = LaTeXML::Converter->get_converter($opts);
+  my $latexml = LaTeXML->get_converter($opts);
   $latexml->prepare_session($opts);
   # Digest and convert to LaTeXML's XML
   my $response = $latexml->convert("literal:$tex_math"); 

@@ -26,6 +26,7 @@ our $VERSION = qv("v0.2"); # shorthand
 use Marpa::R2;
 use LaTeXML::MathAST;
 use LaTeXML::Global;
+use LaTeXML::Common::Error;
 
 our $parses = 0;
 our $RULES = \(<<'END_OF_RULES');

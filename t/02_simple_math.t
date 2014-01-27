@@ -1,6 +1,7 @@
 use strict;
 use warnings;
-use File::Basename;
+use utf8;
+
 use LaTeXML::Util::TestMath;
 
 my @simple_math_tests = (
