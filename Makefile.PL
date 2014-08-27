@@ -29,8 +29,17 @@ WriteMakefile(
     'List::MoreUtils'=>0,
     'HTML::Entities'=>0,
     'Graph::Easy'=>0,
-    'Graph::Easy::As_svg'=>0
-  });
+    'Graph::Easy::As_svg'=>0 },
+  (eval { ExtUtils::MakeMaker->VERSION(6.46) } ? (META_MERGE => {
+    'meta-spec' => { version => 2 },
+      resources => {
+        repository => {
+          type => 'git',
+          url => 'https://github.com/dginev/LaTeXML-Plugin-MathSyntax.git',
+          web => 'https://github.com/dginev/LaTeXML-Plugin-MathSyntax',
+        }}})
+  : ()),
+);
 
 # Append any additional Makefile rules added by the following.
 sub MY::postamble {
