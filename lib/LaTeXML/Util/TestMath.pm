@@ -283,7 +283,7 @@ sub xmldom_to_array {
   my $class = blessed($tree);
   if ($class && ($class ne 'XML::LibXML::Text') && ($class ne 'XML::LibXML::Comment')) {
     # XML leaf, turn to array:
-    my @attributelist = grep {defined} $tree->attributes();
+    my @attributelist = grep {(defined $_) && (ref $_ ne 'XML::LibXML::Namespace')} $tree->attributes();
     my $attributes = {map {$_->localname() => $_->value()} @attributelist};
     ['ltx:'.$tree->localname,$attributes,(grep {defined} map{xmldom_to_array($_)} $tree->childNodes)]; }
   else {
