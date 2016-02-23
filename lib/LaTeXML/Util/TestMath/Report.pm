@@ -14,7 +14,6 @@ package LaTeXML::Util::TestMath;
 use strict;
 use warnings;
 use utf8;
-use feature qw/switch/;
 use Encode;
 use Data::Dumper;
 use Scalar::Util qw/blessed/;
@@ -83,8 +82,8 @@ HEAD
   my $total = 3 * scalar(@$entries);
   my $progressString;
   local $| = 1; # Or use IO::Handle; STDOUT->autoflush;
-  foreach my $entry (@$entries) {  
-    my ($tex,$parse,$expected_syntax,$expected_semantics,$message) = 
+  foreach my $entry (@$entries) {
+    my ($tex,$parse,$expected_syntax,$expected_semantics,$message) =
       map {$entry->{$_}} qw/tex parse syntax semantics message/;
     # HTML-encode the plain text messages
     # And make newlines explicit
@@ -206,7 +205,7 @@ sub add_edges {
       #$e->set_attribute('start','top,0');
       $e->set_attribute('start','east');
       $e->set_attribute('end','west');
-      $offset_string = "$max_width,0"; 
+      $offset_string = "$max_width,0";
       $max_width += $child_width; }
     else {
       $offset_string = "$offset,$default_height";
@@ -234,11 +233,11 @@ sub log_drawing_clear {
 1;
 
 sub element_to_color {
-  given (shift) {
-    when (undef) {return 'black'}
-    when (/^apply|XMApp$/) {return 'orange'}
-    when (/^XMTok|cn|ci$/) {return 'black'}
-    when (/^bind|bvar$/) {return 'red'}
-    when (/^csymbol$/) {return 'blue'}
-    default {return 'black'}
-  };}
+  my $e = shift;
+  if (!$e) {return 'black'}
+  elsif ($e =~ /^apply|XMApp$/) {return 'orange'}
+  elsif ($e =~ /^XMTok|cn|ci$/) {return 'black'}
+  elsif ($e =~ /^bind|bvar$/) {return 'red'}
+  elsif ($e =~ /^csymbol$/) {return 'blue'}
+  else {return 'black'}
+}

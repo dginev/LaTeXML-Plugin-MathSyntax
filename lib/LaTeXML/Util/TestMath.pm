@@ -82,7 +82,7 @@ sub math_tests {
     $array_parse = canonical_form($array_parse);
     # If we're given a parse forest, deal with it appropriately
     my @parse_forest = ();
-    if ($array_parse && ($array_parse->[0] eq 'ltx:XMApp') && 
+    if ($array_parse && ($array_parse->[0] eq 'ltx:XMApp') &&
       (defined $array_parse->[1]->{meaning}) &&
       ($array_parse->[1]->{meaning} eq 'cdlf-set')) {
       @parse_forest = @$array_parse[3..scalar(@$array_parse)-1];
@@ -154,7 +154,7 @@ Expression ::=
 Application ::=
   '(' Expression Arguments ')' action => apply assoc => group
 
-Arguments ::= 
+Arguments ::=
   Expression action => wrap
   | BVar Expression action => wrap
   | Expression Arguments action => merge_right
@@ -173,14 +173,14 @@ Term ::=
 KeyValList ::=
  '[' KeyVals ']' action => unwrap assoc => group
 
-KeyVals ::= 
+KeyVals ::=
   KeyVal action => wrap
   | KeyVal KeyVals action => merge_right
 
 KeyVal ::=
   Word ':' Word action => keyval
 
-RawTerm ::= 
+RawTerm ::=
   Word ':' Word ':' Word action => csymbol
   || Word ':' Word action => basic_symbol
   # Special case where the lexeme is a special char :()
@@ -272,7 +272,7 @@ sub weaken_cmml_to_xmath {
         }}
     }
     @body = grep {defined} map {weaken_cmml_to_xmath($_,$type)} @copy; }
-  
+
   my $meaning = $attributes{meaning};
   if ($meaning && (exists $xmath_meaning->{$meaning})) {
     $attributes{meaning} = $xmath_meaning->{$meaning}; }
@@ -321,12 +321,12 @@ sub canonical_form {
   my $attr = shift @copy;
   # No attributes need match up, as long as the tree corresponds
   my @body = map {canonical_form($_)} @copy;
-  if (($head eq 'ltx:XMApp') && 
-    ($body[0]->[1]->{role}) && ($body[0]->[1]->{role} eq 'SUBSCRIPTOP') && 
+  if (($head eq 'ltx:XMApp') &&
+    ($body[0]->[1]->{role}) && ($body[0]->[1]->{role} eq 'SUBSCRIPTOP') &&
     ($body[1]->[0] eq 'ltx:XMApp') &&
     $body[1]->[2]->[1]->{role} && (($body[1]->[2]->[1]->{role} eq 'SUPERSCRIPTOP'))) {
     # rotate the scripts
-    my $super = $body[1]; 
+    my $super = $body[1];
     my $base = $super->[3];
     my $sub = [$head,$attr,$body[0],$base,$body[2]];
     $super->[3] = $sub;
@@ -427,7 +427,7 @@ sub parse_TeX_math {
   my $latexml = LaTeXML->get_converter($opts);
   $latexml->prepare_session($opts);
   # Digest and convert to LaTeXML's XML
-  my $response = $latexml->convert("literal:$tex_math"); 
+  my $response = $latexml->convert("literal:$tex_math");
   return ($response->{result},$response->{log},$response->{status_code}); }
 
 1;
