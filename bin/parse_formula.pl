@@ -1,11 +1,11 @@
 use warnings;
 use strict;
-use LaTeXML::Util::Config;
-use LaTeXML::Converter;
+use LaTeXML::Common::Config;
+use LaTeXML;
 
 my $tex_math = shift;
 
-my $opts = LaTeXML::Util::Config->new(
+my $opts = LaTeXML::Common::Config->new(
   mathparse => 'LaTeXML::MathSyntax',
   input_limit=>100,
   whatsin=>'math',
@@ -25,9 +25,9 @@ my $opts = LaTeXML::Util::Config->new(
     'eucal.sty',
     '[dvipsnames]xcolor.sty']);
 
-my $latexml = LaTeXML::Converter->get_converter($opts);
+my $latexml = LaTeXML->get_converter($opts);
 $latexml->prepare_session($opts);
 # Digest and convert to LaTeXML's XML
-my $response = $latexml->convert("literal:$tex_math"); 
+my $response = $latexml->convert("literal:$tex_math");
 
 print STDERR $response->{log},"\n\n",$response->{result}->toString(1),"\n";
