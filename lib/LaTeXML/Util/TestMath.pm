@@ -70,11 +70,11 @@ sub math_tests {
       fail($message.": $input");
       diag("$parse_log");
       next; }
-    my $array_parse = xmldom_to_array($xml_parse);
-    unless ($xml_parse) {
+    if (!$xml_parse) {
       my $message = "Convert parse to array";
       push @$report, {tex=>$input,syntax=>$weakened_expected,semantics=>$array_expected,message=>$message} if $options{log};
       fail($message.": $input"); next; }
+    my $array_parse = xmldom_to_array($xml_parse);
     # Unwrap the leading math/xmath if present
     while ($array_parse && ($array_parse->[0] =~ /^ltx:X?Math$/)) {
       $array_parse = $array_parse->[2]; }
@@ -90,13 +90,14 @@ sub math_tests {
       @parse_forest = ($array_parse); }
     # TODO: Figure out how to neatly test both syntax and semantics
     my $s = (@parse_forest > 1) ? 's' : '';
-    my $success = is_syntax(\@parse_forest, $weakened_expected, "Syntax tree match (".scalar(@parse_forest)." parse$s):\n $input\n");
+    my $success = is_syntax(\@parse_forest, $weakened_expected, "Syntax tree match (".scalar(@parse_forest)." parse$s) for $input");
     if ($options{log}) {
       my $message;
       if ($success) {
         $message = 'Success.'; }
       else {
-        $message = "Syntax tree match (".scalar(@parse_forest)." parse$s)"; }
+        $message = "Syntax tree match (".scalar(@parse_forest)." parse$s)"; 
+      }
       push @$report, {tex=>$input,parse=>$array_parse,
         syntax=>$weakened_expected,semantics=>$array_expected,message=>$message}
     }
@@ -409,8 +410,13 @@ sub parse_TeX_math {
     input_limit=>100,
     whatsin=>'math',
     whatsout=>'math',
-    post=>0,
+    post=>1,
+    scan=>0,
+    crossref=>0,
+    index=>0,
+    dographics=>0,
     verbosity=>1,
+    math_formats=>['xmath'],
     mathparse=>$options{parser},
     defaultresources => 0,
     format=>'dom',

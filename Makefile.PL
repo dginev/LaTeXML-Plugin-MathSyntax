@@ -23,7 +23,7 @@ WriteMakefile(
   ABSTRACT => "A new approach to parsing mathematical expressions for LaTeXML",
   VERSION_FROM => 'lib/LaTeXML/MathSyntax.pm',
   PREREQ_PM => { 
-    'LaTeXML'=>'0.7.99',
+    'LaTeXML'=>'0.8.3',
     'Marpa::R2'=>0,
     'Test::Deep'=>0,
     'List::MoreUtils'=>0,
