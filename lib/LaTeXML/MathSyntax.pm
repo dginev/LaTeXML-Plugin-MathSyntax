@@ -32,7 +32,7 @@ our $parses = 0;
 our $RULES = \(<<'END_OF_RULES');
 :start ::= Start
 # 0. Expression trees considered grammatical:
-Start ::= 
+Start ::=
   Termlike  action => finalize
   | Formula  action => finalize
   | RelativeFormula  action => finalize
@@ -72,14 +72,14 @@ MulFactor ::=
   | MulFactor _ Mulop _ FactorArgument  action => infix_apply_factor
 
   # I.2.3. Infix Concatenation - Left and Right
-  | FactorArgument _ FactorArgument  action => concat_apply_left 
-  | MulFactor _ FactorArgument  action => concat_apply_left 
+  | FactorArgument _ FactorArgument  action => concat_apply_left
+  | MulFactor _ FactorArgument  action => concat_apply_left
   # The asymetry in the above two rules makes '2a f(x)' ungrammatical
   # So we add a rule of lesser priority to match compounds:
   # But if we are not careful, we will allow too many parses for ' f(x)f(y)'
-  # But then again we also need to consider (f \circ g) x 
+  # But then again we also need to consider (f \circ g) x
   | PostFactor
-  | MulFactor _ PostFactor  action => concat_apply_factor 
+  | MulFactor _ PostFactor  action => concat_apply_factor
 
 PostFactor ::=
   # I.2.2  Postfix operator - factors
@@ -92,7 +92,7 @@ FunFactor ::=
   | FactorArgument _ FunFactor action => concat_apply_right assoc=>right
   || Factor _ FunFactor  action => concat_apply_factor assoc=>right
 
-# II. Terms 
+# II. Terms
 # II.1. TermArguments
 TermArgument ::=
   Prefix _ TermArgument  action => prefix_apply_term
@@ -118,7 +118,7 @@ Term ::=
   | TermArgument _ Postfix  action => postfix_apply_term
 
 
-# III. Types 
+# III. Types
 # III.1 Type Infix Operator - Type Constructors
 Type ::=
   Factor _ Arrow _ Factor  action => infix_apply_type
@@ -152,7 +152,7 @@ BigTerm ::=
   # V.1. Big Summation
   # Think about this -> it behaves as a Factor argument on the left e.g.
   #    (1-t)\sum ...
-  # but never on the right! We should enforce this to avoid confusion? 
+  # but never on the right! We should enforce this to avoid confusion?
   # use a BigTerm category?
   Bigop _ Factor  action => prefix_apply_term
   | Bigop _ TermArgument  action => prefix_apply_term
@@ -210,10 +210,10 @@ RelativeFormula ::=
 
 # Notes: Modifiers
 # Modified terms should only appear in sequences, hence entries
-# Hm, not really, they can appear anywhere with ease, as long as 
+# Hm, not really, they can appear anywhere with ease, as long as
 # the relation ops are from different domains, so that there is a unique reading
 
-FormulaArgument ::= 
+FormulaArgument ::=
   FormulaArgument _ COLON _ Type  action => infix_apply_formula
   | OPEN _ Formula _ CLOSE  action => fenced
   # | FormulaArgument ::= FormulaArgument _ Relop _ Term  action => infix_apply_formula
@@ -225,7 +225,7 @@ FormulaArgument ::=
 
 
 # Examples???
-RelativeFormulaArgument ::= 
+RelativeFormulaArgument ::=
   OPEN _ RelativeFormula _ CLOSE  action => fenced
   | RelativeFormulaArgument _ Supop action=>postscript_apply
   | RelativeFormulaArgument _ POSTSUPERSCRIPT action=>postscript_apply
@@ -236,7 +236,7 @@ RelativeFormulaArgument ::=
 # XII. Sequence structures
 # XII.1. Vectors:
 
-Entry ::= 
+Entry ::=
   Term
   | FactorArgument _ Relop _ Term  action => infix_apply_entry
   # a := (1<3) should be grammatical
@@ -261,12 +261,12 @@ Element ::=
   | Postfix
   | Metarelop
 # XII.2.2 Recursive case: sequences
-Sequence ::= 
+Sequence ::=
   Vector _ PUNCT _ Element  action => infix_apply_sequence
   | Entry _ PUNCT _ Element  action => infix_apply_sequence
   | Element _ PUNCT _ Entry  action => infix_apply_sequence
   | Sequence _ PUNCT _ Entry  action => infix_apply_sequence
-  # Yuck! Vector adjustments to avoid multiple parses 
+  # Yuck! Vector adjustments to avoid multiple parses
   | Element _ PUNCT _ Element  action => infix_apply_sequence
   | Sequence _ PUNCT _ Element  action => infix_apply_sequence
 
@@ -386,7 +386,7 @@ Bigop ::=
   | FLOATSUPERSCRIPT _ Bigop action=>prescript_apply
   | FLOATSUBSCRIPT _ Bigop action=>prescript_apply
 
-Supop ::= 
+Supop ::=
   SUPOP
   | Supop _ SUPOP action => extend_operator
 
@@ -461,7 +461,7 @@ sub parse {
   while (@unparsed) {
     my $next = shift @unparsed;
     my ($category,$lexeme,$id) = split(':',$next);
-    # Issues: 
+    # Issues:
     # 1. More specific lexical roles for fences, =, :, others...?
     if ($category eq 'METARELOP') {
       $category = 'COLON' if ($lexeme eq 'colon');
@@ -494,7 +494,7 @@ sub parse {
         next ;
       }
       push @values, ${$value_ref} if (defined $value_ref);
-    } 
+    }
   }
   if (!@values) { # Incomplete / no parse
     Warn('not_parsed','Marpa',undef,$saved_report);
